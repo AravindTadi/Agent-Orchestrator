@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Hub</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Select Your Companion</h1>
+            <p>Choose an intelligence to interact with</p>
+        </header>
+
+        <div class="agents-grid">
+            <!-- Agent 1: Nova -->
+            <div class="agent-card" onclick="openChat('agent_1')">
+                <div class="agent-avatar nova-avatar">
+                    <div class="glow"></div>
+                    <span>N</span>
+                </div>
+                <h2>Nova</h2>
+                <p>The Logical Futurist</p>
+                <button class="connect-btn">Connect</button>
+            </div>
+
+            <!-- Agent 2: Blaze -->
+            <div class="agent-card" onclick="openChat('agent_2')">
+                <div class="agent-avatar blaze-avatar">
+                    <div class="glow"></div>
+                    <span>B</span>
+                </div>
+                <h2>Blaze</h2>
+                <p>The Creative Rebel</p>
+                <button class="connect-btn">Connect</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chat-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="chat-header">
+                <div class="chat-agent-info">
+                    <div id="chat-avatar" class="mini-avatar"></div>
+                    <h3 id="chat-agent-name">Agent Name</h3>
+                </div>
+                <button class="close-btn" onclick="closeChat()">×</button>
+            </div>
+            
+            <div id="chat-history" class="chat-history">
+                <div class="message system-message">
+                    Connection established. How can I assist you today?
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <input type="text" id="user-input" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()" id="send-btn">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
