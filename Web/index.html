@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -49,7 +51,7 @@
                 </div>
                 <button class="close-btn" onclick="closeChat()">×</button>
             </div>
-            
+
             <div id="chat-history" class="chat-history">
                 <div class="message system-message">
                     Connection established. How can I assist you today?
@@ -57,7 +59,8 @@
             </div>
 
             <div class="chat-input-area">
-                <input type="text" id="user-input" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                <input type="text" id="user-input" placeholder="Type your message..."
+                    onkeypress="handleKeyPress(event)">
                 <button onclick="sendMessage()" id="send-btn">
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>
@@ -69,4 +72,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>
