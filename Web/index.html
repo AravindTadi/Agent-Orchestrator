@@ -4,105 +4,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Orchestrator</title>
+    <title>Agent Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
         rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f4f4;
+            margin: 0;
+            /* Remove default margin */
+            padding: 0;
+            /* Remove body padding to let sidebar touch edges */
+        }
+
+        .dashboard-container {
+            padding: 2rem 3rem;
+            /* Add generous padding to the content */
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .dashboard-header {
+            margin: 0 0 2rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dashboard-header h1 {
+            font-weight: 300;
+            font-size: 2.5rem;
+            color: #161616;
+        }
+
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 0;
+        }
+
+        .agent-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            height: 200px;
+            position: relative;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: #0f62fe;
+        }
+
+        .agent-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #161616;
+        }
+
+        .agent-card p {
+            color: #525252;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .agent-card .arrow {
+            align-self: flex-end;
+            color: #0f62fe;
+            font-weight: 600;
+        }
+
+        .create-card {
+            border: 1px dashed #8d8d8d;
+            background: transparent;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .create-card:hover {
+            background: #e5e5e5;
+            border-color: #161616;
+        }
+
+        .create-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #0f62fe;
+        }
+    </style>
 </head>
 
 <body>
     <div class="app-container">
-        <!-- Left Sidebar: Agent List -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>Orchestrate</h2>
+        <!-- Global Sidebar -->
+        <nav class="main-nav" id="main-nav">
+            <div class="nav-header">
+                AgentHub
             </div>
-            <div class="agent-list" id="agent-list">
-                <!-- Agents will be injected here -->
+            <div class="nav-links">
+                <a href="index.html" class="nav-item active">
+                    Agents
+                </a>
+                <a href="chat.html" class="nav-item">
+                    Chat
+                </a>
             </div>
-            <button class="create-agent-btn" onclick="createNewAgent()">
-                <span>+</span> New Agent
+        </nav>
+
+        <!-- Overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- Top Navbar -->
+        <div class="top-navbar">
+            <button class="hamburger-btn" onclick="toggleSidebar()">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+                </svg>
             </button>
-        </aside>
+            <div class="navbar-title">AgentHub</div>
+            <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
+                <svg id="theme-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <!-- Moon Icon (Default) -->
+                    <path
+                        d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z">
+                    </path>
+                </svg>
+            </button>
+        </div>
 
-        <!-- Center: Agent Configuration -->
-        <main class="config-panel">
-            <div class="config-header">
-                <h1>Agent Configuration</h1>
-                <button class="save-btn" onclick="saveAgentConfig()">Save Changes</button>
-            </div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <h1>My Agents</h1>
+                </div>
 
-            <div class="form-group">
-                <label for="agent-name">Name</label>
-                <input type="text" id="agent-name" placeholder="e.g., HR Assistant">
-            </div>
-
-            <div class="form-group">
-                <label for="agent-desc">Description</label>
-                <input type="text" id="agent-desc" placeholder="What does this agent do?">
-            </div>
-
-            <div class="form-group">
-                <label for="agent-prompt">Behavior / System Prompt</label>
-                <textarea id="agent-prompt" placeholder="You are a helpful assistant who..."></textarea>
-                <p class="hint">Define the personality and rules for this agent.</p>
-            </div>
-
-            <div class="form-group">
-                <label>Capabilities</label>
-                <div class="capabilities-list">
-                    <label class="checkbox-container">
-                        <input type="checkbox" checked disabled>
-                        <span class="checkmark"></span>
-                        AWS Tools (S3 Management)
-                    </label>
+                <div class="agent-grid" id="agent-grid">
+                    <!-- Agents injected here -->
+                    <div class="agent-card create-card" onclick="createNewAgent()">
+                        <div class="create-icon">+</div>
+                        <h3>Create New Agent</h3>
+                    </div>
                 </div>
             </div>
         </main>
-
-        <!-- Right Sidebar: Chat -->
-        <aside class="chat-panel">
-            <div class="chat-header">
-                <div class="chat-header-left">
-                    <div class="status-dot"></div>
-                    <h3>Choose Model</h3>
-                </div>
-                <div class="chat-header-right">
-                    <select id="model-select" class="model-select">
-                        <option value="llama-3.3-70b-versatile">Llama 3.3 (70B)</option>
-                        <option value="llama-3.1-8b-instant">Llama 3.1 (8B Instant)</option>
-                    </select>
-                    <button class="refresh-btn" onclick="resetChat()" title="Reset Chat">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                            </path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <div class="chat-history" id="chat-history">
-                <div class="empty-state">
-                    Select or create an agent to start chatting.
-                </div>
-            </div>
-
-            <div class="chat-input-area">
-                <input type="text" id="user-input" placeholder="Type a message..." onkeypress="handleKeyPress(event)"
-                    disabled>
-                <button id="send-btn" onclick="sendMessage()" disabled>
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
-                    </svg>
-                </button>
-            </div>
-        </aside>
     </div>
 
-    <div id="toast" class="toast">Agent configuration saved!</div>
-    <script src="script.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('main-nav').classList.toggle('open');
+            document.getElementById('sidebar-overlay').classList.toggle('show');
+        }
+
+        // Shared Agent Data (Simulated Persistence)
+        // In a real app, this would come from the backend API
+        let agents = JSON.parse(localStorage.getItem('mcp_agents')) || {
+            "agent_default": {
+                id: "agent_default",
+                name: "My First Agent",
+                description: "A helpful AI assistant ready to be configured.",
+                system_prompt: "You are a helpful AI assistant."
+            }
+        };
+
+        function renderGrid() {
+            const grid = document.getElementById('agent-grid');
+            // Remove existing cards (keep the create button which is last)
+            const createBtn = grid.lastElementChild;
+            grid.innerHTML = '';
+
+            Object.values(agents).forEach(agent => {
+                const card = document.createElement('div');
+                card.className = 'agent-card';
+                card.onclick = () => window.location.href = `orchestrator.html?agent=${agent.id}`;
+                card.innerHTML = `
+                    <h3>${agent.name}</h3>
+                    <p>${agent.description || "No description provided."}</p>
+                    <div class="arrow">Open →</div>
+                `;
+                grid.appendChild(card);
+            });
+            grid.appendChild(createBtn);
+        }
+
+        function createNewAgent() {
+            // Redirect to orchestrator in create mode
+            window.location.href = `orchestrator.html?mode=create`;
+        }
+
+        // Initial Render
+        renderGrid();
+    </script>
 </body>
 
 </html>

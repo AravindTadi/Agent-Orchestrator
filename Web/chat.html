@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - AgentHub</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        .chat-layout {
+            display: flex;
+            height: 100%;
+            flex-direction: column;
+            background: white;
+        }
+
+        .chat-selection-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: #f4f4f4;
+        }
+
+        .agent-select {
+            padding: 0.8rem;
+            font-size: 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            min-width: 250px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Global Sidebar -->
+        <nav class="main-nav" id="main-nav">
+            <div class="nav-header">
+                AgentHub
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-item">
+                    Agents
+                </a>
+                <a href="chat.html" class="nav-item active">
+                    Chat
+                </a>
+            </div>
+        </nav>
+
+        <!-- Overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- Top Navbar -->
+        <div class="top-navbar">
+            <button class="hamburger-btn" onclick="toggleSidebar()">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+                </svg>
+            </button>
+            <div class="navbar-title">Chat</div>
+            <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
+                <svg id="theme-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path
+                        d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="chat-layout">
+                <!-- Agent Selection Header -->
+                <div class="chat-selection-header">
+                    <label for="agent-dropdown" style="font-weight: 600;">Chat with:</label>
+                    <select id="agent-dropdown" class="agent-select" onchange="switchAgent(this.value)">
+                        <option value="" disabled selected>Select an Agent...</option>
+                    </select>
+                </div>
+
+                <!-- Reusing existing Chat Panel Structure -->
+                <div class="chat-panel" style="flex: 1; border: none;">
+                    <div class="chat-header">
+                        <div class="chat-header-left">
+                            <div class="status-dot"></div>
+                            <h3>Choose Model</h3>
+                        </div>
+                        <div class="chat-header-right">
+                            <select id="model-select" class="model-select">
+                                <option value="llama-3.3-70b-versatile">Llama 3.3 (70B)</option>
+                                <option value="llama-3.1-8b-instant">Llama 3.1 (8B Instant)</option>
+                            </select>
+                            <button class="refresh-btn" onclick="resetChat()" title="Reset Chat">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="chat-history" id="chat-history">
+                        <div class="empty-state">
+                            Select an agent above to start chatting.
+                        </div>
+                    </div>
+
+                    <div class="chat-input-area">
+                        <input type="text" id="user-input" placeholder="Type a message..."
+                            onkeypress="handleKeyPress(event)" disabled>
+                        <button id="send-btn" onclick="sendMessage()" disabled>
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Override initialization for Chat Page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load agents
+            const agents = JSON.parse(localStorage.getItem('mcp_agents')) || {};
+            const dropdown = document.getElementById('agent-dropdown');
+
+            Object.values(agents).forEach(agent => {
+                const option = document.createElement('option');
+                option.value = agent.id;
+                option.text = agent.name;
+                dropdown.appendChild(option);
+            });
+        });
+
+        function switchAgent(agentId) {
+            if (!agentId) return;
+
+            // Use existing selectAgent logic from script.js
+            // But we need to mock the UI elements that script.js expects (like agent-name input)
+            // OR we just set the currentAgentId directly since we are in "Chat Only" mode
+
+            currentAgentId = agentId;
+            const agent = agents[agentId]; // agents is global from script.js
+
+            // Reset Chat UI
+            chatHistory = [];
+            document.getElementById('chat-history').innerHTML = `
+                <div class="empty-state">
+                    Start chatting with ${agent.name}...
+                </div>
+            `;
+
+            // Enable Input
+            document.getElementById('user-input').disabled = false;
+            document.getElementById('send-btn').disabled = false;
+        }
+    </script>
+</body>
+
+</html>
