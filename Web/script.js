@@ -1,85 +1,133 @@
-let currentAgent = null;
-let chatHistory = [];
-
-const AGENTS = {
-    'agent_1': { name: 'Nova', color: '#0ea5e9' },
-    'agent_2': { name: 'Blaze', color: '#ec4899' }
+let agents = {
+    "agent_1": {
+        id: "agent_1",
+        name: "Nova",
+        description: "Futuristic AI assistant with AWS capabilities.",
+        system_prompt: "You are Nova, a futuristic AI assistant. You have access to AWS tools. Use them when requested. Be precise."
+    },
+    "agent_2": {
+        id: "agent_2",
+        name: "Blaze",
+        description: "Creative AI with a flair for the dramatic.",
+        system_prompt: "You are Blaze, a creative AI. You can also manage AWS resources if asked, but you do it with style."
+    }
 };
 
-function openChat(agentId) {
-    currentAgent = agentId;
-    chatHistory = []; // Reset history for new session
+let currentAgentId = null;
+let chatHistory = [];
 
-    // Update UI
-    const agent = AGENTS[agentId];
-    document.getElementById('chat-agent-name').innerText = agent.name;
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    renderAgentList();
+});
 
-    const avatar = document.getElementById('chat-avatar');
-    avatar.style.background = agentId === 'agent_1'
-        ? 'linear-gradient(135deg, #0ea5e9, #2563eb)'
-        : 'linear-gradient(135deg, #ec4899, #db2777)';
+function renderAgentList() {
+    const list = document.getElementById('agent-list');
+    list.innerHTML = '';
 
-    // Clear previous messages except system message
-    const historyDiv = document.getElementById('chat-history');
-    historyDiv.innerHTML = `
-        <div class="message system-message">
-            Connection established with ${agent.name}. How can I assist you today?
+    Object.values(agents).forEach(agent => {
+        const item = document.createElement('div');
+        item.className = `agent-item ${currentAgentId === agent.id ? 'active' : ''}`;
+        item.onclick = () => selectAgent(agent.id);
+        item.innerHTML = `<span>🤖</span> ${agent.name}`;
+        list.appendChild(item);
+    });
+}
+
+function selectAgent(id) {
+    currentAgentId = id;
+    const agent = agents[id];
+
+    // Update UI Active State
+    renderAgentList();
+
+    // Populate Config Panel
+    document.getElementById('agent-name').value = agent.name;
+    document.getElementById('agent-desc').value = agent.description;
+    document.getElementById('agent-prompt').value = agent.system_prompt;
+
+    // Reset Chat
+    chatHistory = [];
+    document.getElementById('chat-header-name').innerText = agent.name;
+    document.getElementById('chat-history').innerHTML = `
+        <div class="message assistant">
+            Hello! I am ${agent.name}. How can I help you?
         </div>
     `;
 
-    // Show modal
-    document.getElementById('chat-modal').classList.remove('hidden');
-    document.getElementById('user-input').focus();
+    // Enable Chat Input
+    document.getElementById('user-input').disabled = false;
+    document.getElementById('send-btn').disabled = false;
 }
 
-function closeChat() {
-    document.getElementById('chat-modal').classList.add('hidden');
-    currentAgent = null;
+function createNewAgent() {
+    const id = `agent_${Date.now()}`;
+    agents[id] = {
+        id: id,
+        name: "New Agent",
+        description: "A new custom agent",
+        system_prompt: "You are a helpful AI assistant."
+    };
+    selectAgent(id);
+}
+
+function saveAgentConfig() {
+    if (!currentAgentId) return;
+
+    const name = document.getElementById('agent-name').value;
+    const desc = document.getElementById('agent-desc').value;
+    const prompt = document.getElementById('agent-prompt').value;
+
+    agents[currentAgentId].name = name;
+    agents[currentAgentId].description = desc;
+    agents[currentAgentId].system_prompt = prompt;
+
+    renderAgentList();
+    document.getElementById('chat-header-name').innerText = name;
+
+    // In a real app, we would send this to the backend to persist
+    alert('Agent configuration saved!');
 }
 
 function handleKeyPress(event) {
-    if (event.key === 'Enter') {
-        sendMessage();
-    }
+    if (event.key === 'Enter') sendMessage();
 }
 
 async function sendMessage() {
     const input = document.getElementById('user-input');
     const message = input.value.trim();
 
-    if (!message || !currentAgent) return;
+    if (!message || !currentAgentId) return;
 
     // Clear input
     input.value = '';
 
-    // Add User Message to UI
+    // Add User Message
     appendMessage('user', message);
 
-    // Disable send button while waiting
+    // Disable send
     const sendBtn = document.getElementById('send-btn');
     sendBtn.disabled = true;
 
     try {
-        // Call Backend
+        // Send to Backend
+        // Note: We send the CURRENT config, so dynamic changes work immediately
         const response = await fetch('http://localhost:8000/chat', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                agent_id: currentAgent,
+                agent_id: currentAgentId,
+                system_prompt: agents[currentAgentId].system_prompt, // Send dynamic prompt
                 message: message,
                 history: chatHistory
             })
         });
 
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
+        if (!response.ok) throw new Error('Network error');
 
         const data = await response.json();
 
-        // Add Assistant Message to UI
+        // Add Assistant Message
         appendMessage('assistant', data.response);
 
         // Update History
@@ -87,8 +135,8 @@ async function sendMessage() {
         chatHistory.push({ role: 'assistant', content: data.response });
 
     } catch (error) {
-        console.error('Error:', error);
-        appendMessage('system-message', 'Error: Could not connect to the agent. Please check if the backend is running.');
+        console.error(error);
+        appendMessage('assistant', 'Error: Could not connect to backend.');
     } finally {
         sendBtn.disabled = false;
         input.focus();
@@ -99,10 +147,7 @@ function appendMessage(role, text) {
     const historyDiv = document.getElementById('chat-history');
     const msgDiv = document.createElement('div');
     msgDiv.className = `message ${role}`;
-
-    // Convert newlines to <br> for display
     msgDiv.innerHTML = text.replace(/\n/g, '<br>');
-
     historyDiv.appendChild(msgDiv);
     historyDiv.scrollTop = historyDiv.scrollHeight;
 }

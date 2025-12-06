@@ -4,70 +4,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Agent Hub</title>
+    <title>Agent Orchestrator</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <h1>Select Your Companion</h1>
-            <p>Choose an intelligence to interact with</p>
-        </header>
+    <div class="app-container">
+        <!-- Left Sidebar: Agent List -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Orchestrate</h2>
+            </div>
+            <div class="agent-list" id="agent-list">
+                <!-- Agents will be injected here -->
+            </div>
+            <button class="create-agent-btn" onclick="createNewAgent()">
+                <span>+</span> New Agent
+            </button>
+        </aside>
 
-        <div class="agents-grid">
-            <!-- Agent 1: Nova -->
-            <div class="agent-card" onclick="openChat('agent_1')">
-                <div class="agent-avatar nova-avatar">
-                    <div class="glow"></div>
-                    <span>N</span>
-                </div>
-                <h2>Nova</h2>
-                <p>The Logical Futurist</p>
-                <button class="connect-btn">Connect</button>
+        <!-- Center: Agent Configuration -->
+        <main class="config-panel">
+            <div class="config-header">
+                <h1>Agent Configuration</h1>
+                <button class="save-btn" onclick="saveAgentConfig()">Save Changes</button>
             </div>
 
-            <!-- Agent 2: Blaze -->
-            <div class="agent-card" onclick="openChat('agent_2')">
-                <div class="agent-avatar blaze-avatar">
-                    <div class="glow"></div>
-                    <span>B</span>
-                </div>
-                <h2>Blaze</h2>
-                <p>The Creative Rebel</p>
-                <button class="connect-btn">Connect</button>
+            <div class="form-group">
+                <label for="agent-name">Name</label>
+                <input type="text" id="agent-name" placeholder="e.g., HR Assistant">
             </div>
-        </div>
-    </div>
 
-    <!-- Chat Modal -->
-    <div id="chat-modal" class="modal hidden">
-        <div class="modal-content">
+            <div class="form-group">
+                <label for="agent-desc">Description</label>
+                <input type="text" id="agent-desc" placeholder="What does this agent do?">
+            </div>
+
+            <div class="form-group">
+                <label for="agent-prompt">Behavior / System Prompt</label>
+                <textarea id="agent-prompt" placeholder="You are a helpful assistant who..."></textarea>
+                <p class="hint">Define the personality and rules for this agent.</p>
+            </div>
+
+            <div class="form-group">
+                <label>Capabilities</label>
+                <div class="capabilities-list">
+                    <label class="checkbox-container">
+                        <input type="checkbox" checked disabled>
+                        <span class="checkmark"></span>
+                        AWS Tools (S3 Management)
+                    </label>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar: Chat -->
+        <aside class="chat-panel">
             <div class="chat-header">
-                <div class="chat-agent-info">
-                    <div id="chat-avatar" class="mini-avatar"></div>
-                    <h3 id="chat-agent-name">Agent Name</h3>
-                </div>
-                <button class="close-btn" onclick="closeChat()">×</button>
+                <div class="status-dot"></div>
+                <h3 id="chat-header-name">Select an Agent</h3>
             </div>
 
-            <div id="chat-history" class="chat-history">
-                <div class="message system-message">
-                    Connection established. How can I assist you today?
+            <div class="chat-history" id="chat-history">
+                <div class="empty-state">
+                    Select or create an agent to start chatting.
                 </div>
             </div>
 
             <div class="chat-input-area">
-                <input type="text" id="user-input" placeholder="Type your message..."
-                    onkeypress="handleKeyPress(event)">
-                <button onclick="sendMessage()" id="send-btn">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>
+                <input type="text" id="user-input" placeholder="Type a message..." onkeypress="handleKeyPress(event)"
+                    disabled>
+                <button id="send-btn" onclick="sendMessage()" disabled>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
                     </svg>
                 </button>
             </div>
-        </div>
+        </aside>
     </div>
 
     <script src="script.js"></script>

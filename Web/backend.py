@@ -101,31 +101,20 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     agent_id: str
+    system_prompt: str  # New field: Frontend sends the prompt
     message: str
     history: List[Message]
-
-AGENTS = {
-    "agent_1": {
-        "name": "Nova",
-        "system_prompt": "You are Nova, a futuristic AI assistant. You have access to AWS tools. Use them when requested. Be precise."
-    },
-    "agent_2": {
-        "name": "Blaze",
-        "system_prompt": "You are Blaze, a creative AI. You can also manage AWS resources if asked, but you do it with style."
-    }
-}
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
     if not api_key:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY not found")
     
-    agent = AGENTS.get(request.agent_id)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
+    # We no longer look up hardcoded agents. 
+    # We use the system_prompt provided by the frontend.
 
     # Prepare messages
-    messages = [{"role": "system", "content": agent["system_prompt"]}]
+    messages = [{"role": "system", "content": request.system_prompt}]
     for msg in request.history:
         # Filter out fields that Groq might not like if they are None
         m = {"role": msg.role, "content": msg.content}
