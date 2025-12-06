@@ -1,15 +1,9 @@
 let agents = {
-    "agent_1": {
-        id: "agent_1",
-        name: "Nova",
-        description: "Futuristic AI assistant with AWS capabilities.",
-        system_prompt: "You are Nova, a futuristic AI assistant. You have access to AWS tools. Use them when requested. Be precise."
-    },
-    "agent_2": {
-        id: "agent_2",
-        name: "Blaze",
-        description: "Creative AI with a flair for the dramatic.",
-        system_prompt: "You are Blaze, a creative AI. You can also manage AWS resources if asked, but you do it with style."
+    "agent_default": {
+        id: "agent_default",
+        name: "My First Agent",
+        description: "A helpful AI assistant ready to be configured.",
+        system_prompt: "You are a helpful AI assistant."
     }
 };
 
@@ -29,7 +23,7 @@ function renderAgentList() {
         const item = document.createElement('div');
         item.className = `agent-item ${currentAgentId === agent.id ? 'active' : ''}`;
         item.onclick = () => selectAgent(agent.id);
-        item.innerHTML = `<span>🤖</span> ${agent.name}`;
+        item.innerHTML = `${agent.name}`; // Removed emoji
         list.appendChild(item);
     });
 }
@@ -50,8 +44,8 @@ function selectAgent(id) {
     chatHistory = [];
     document.getElementById('chat-header-name').innerText = agent.name;
     document.getElementById('chat-history').innerHTML = `
-        <div class="message assistant">
-            Hello! I am ${agent.name}. How can I help you?
+        <div class="empty-state">
+            Start chatting with ${agent.name}...
         </div>
     `;
 
@@ -65,8 +59,8 @@ function createNewAgent() {
     agents[id] = {
         id: id,
         name: "New Agent",
-        description: "A new custom agent",
-        system_prompt: "You are a helpful AI assistant."
+        description: "", // Empty by default so placeholder shows
+        system_prompt: "" // Empty by default
     };
     selectAgent(id);
 }
@@ -98,8 +92,8 @@ function resetChat() {
     // Reset UI
     const agent = agents[currentAgentId];
     document.getElementById('chat-history').innerHTML = `
-        <div class="message assistant">
-            Hello! I am ${agent.name}. How can I help you?
+        <div class="empty-state">
+            Start chatting with ${agent.name}...
         </div>
     `;
 
