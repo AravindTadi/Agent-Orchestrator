@@ -89,6 +89,26 @@ function saveAgentConfig() {
     alert('Agent configuration saved!');
 }
 
+function resetChat() {
+    if (!currentAgentId) return;
+
+    // Clear history array
+    chatHistory = [];
+
+    // Reset UI
+    const agent = agents[currentAgentId];
+    document.getElementById('chat-history').innerHTML = `
+        <div class="message assistant">
+            Hello! I am ${agent.name}. How can I help you?
+        </div>
+    `;
+
+    // Enable input if it was disabled
+    document.getElementById('user-input').disabled = false;
+    document.getElementById('send-btn').disabled = false;
+    document.getElementById('user-input').focus();
+}
+
 function handleKeyPress(event) {
     if (event.key === 'Enter') sendMessage();
 }
@@ -96,6 +116,7 @@ function handleKeyPress(event) {
 async function sendMessage() {
     const input = document.getElementById('user-input');
     const message = input.value.trim();
+    const model = document.getElementById('model-select').value;
 
     if (!message || !currentAgentId) return;
 
@@ -118,6 +139,7 @@ async function sendMessage() {
             body: JSON.stringify({
                 agent_id: currentAgentId,
                 system_prompt: agents[currentAgentId].system_prompt, // Send dynamic prompt
+                model: model, // Send selected model
                 message: message,
                 history: chatHistory
             })

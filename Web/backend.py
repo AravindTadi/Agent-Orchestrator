@@ -101,7 +101,8 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     agent_id: str
-    system_prompt: str  # New field: Frontend sends the prompt
+    system_prompt: str
+    model: str = "llama-3.3-70b-versatile" # Default model
     message: str
     history: List[Message]
 
@@ -110,9 +111,6 @@ async def chat(request: ChatRequest):
     if not api_key:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY not found")
     
-    # We no longer look up hardcoded agents. 
-    # We use the system_prompt provided by the frontend.
-
     # Prepare messages
     messages = [{"role": "system", "content": request.system_prompt}]
     for msg in request.history:
@@ -131,7 +129,7 @@ async def chat(request: ChatRequest):
     try:
         # 1. First Call to LLM (with tools)
         completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model=request.model, # Use the model requested by frontend
             messages=messages,
             tools=mcp_tools if mcp_tools else None,
             tool_choice="auto",
@@ -174,7 +172,7 @@ async def chat(request: ChatRequest):
             
             # 3. Second Call to LLM (to generate final answer based on tool results)
             second_completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model=request.model,
                 messages=messages
             )
             return {"response": second_completion.choices[0].message.content}
