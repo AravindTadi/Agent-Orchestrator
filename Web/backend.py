@@ -7,7 +7,7 @@ import os
 import json
 import asyncio
 from typing import List, Optional, Dict, Any
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, AsyncExitStack
 
 # MCP Imports
 from mcp import ClientSession, StdioServerParameters
@@ -40,38 +40,43 @@ async def lifespan(app: FastAPI):
     )
 
     # Start the MCP Client
-    # Note: We are managing the context manually here to keep it alive across requests
-    # In a production app, you might want a more robust connection pool
-    transport = await stdio_client(server_params).__aenter__()
-    read, write = transport
+    # We use an ExitStack to manage the nested context managers manually but safely
     
-    mcp_session = ClientSession(read, write)
-    await mcp_session.__aenter__()
-    await mcp_session.initialize()
-    
-    # Fetch available tools
-    tools_result = await mcp_session.list_tools()
-    
-    # Convert MCP tools to Groq/OpenAI Tool Format
-    mcp_tools = []
-    for tool in tools_result.tools:
-        mcp_tools.append({
-            "type": "function",
-            "function": {
-                "name": tool.name,
-                "description": tool.description,
-                "parameters": tool.inputSchema
-            }
-        })
-        
-    print(f"✅ MCP Connected! Loaded {len(mcp_tools)} tools: {[t['function']['name'] for t in mcp_tools]}")
-    
-    yield
-    
-    # Cleanup
-    print("🔌 Closing MCP Connection...")
-    await mcp_session.__aexit__(None, None, None)
-    await transport.__aexit__(None, None, None)
+    async with AsyncExitStack() as stack:
+        try:
+            transport = await stack.enter_async_context(stdio_client(server_params))
+            read, write = transport
+            
+            mcp_session = await stack.enter_async_context(ClientSession(read, write))
+            await mcp_session.initialize()
+            
+            # Fetch available tools
+            tools_result = await mcp_session.list_tools()
+            
+            # Convert MCP tools to Groq/OpenAI Tool Format
+            mcp_tools = []
+            for tool in tools_result.tools:
+                mcp_tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.inputSchema
+                    }
+                })
+                
+            print(f"✅ MCP Connected! Loaded {len(mcp_tools)} tools: {[t['function']['name'] for t in mcp_tools]}")
+            
+            # Yield control back to FastAPI to run the app
+            yield
+            
+        except Exception as e:
+            print(f"❌ Error during MCP startup: {e}")
+            # If startup fails, we still yield so the app can crash gracefully or show error
+            yield
+        finally:
+            print("🔌 Closing MCP Connection...")
+            # The AsyncExitStack will automatically close session and transport here
 
 
 app = FastAPI(lifespan=lifespan)
