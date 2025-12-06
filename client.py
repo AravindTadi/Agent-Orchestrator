@@ -25,10 +25,17 @@ async def main():
             result = await session.call_tool("list_buckets")
             print(result.content[0].text)
 
-            # Optional: Uncomment to create a bucket (Change the name first!)
-            # print("\n> Creating a new bucket...")
-            # result = await session.call_tool("create_bucket", arguments={"bucket_name": "my-test-bucket-mcp-123"})
-            # print(result.content[0].text)
+            # 4. Create a new bucket
+            import random
+            bucket_name = f"mcp-test-bucket-{random.randint(1000, 9999)}"
+            print(f"\n> Creating a new bucket: {bucket_name}...")
+            result = await session.call_tool("create_bucket", arguments={"bucket_name": bucket_name})
+            print(result.content[0].text)
+            
+            # 5. List again to verify
+            print("\n> Verifying bucket list...")
+            result = await session.call_tool("list_buckets")
+            print(result.content[0].text)
 
 if __name__ == "__main__":
     asyncio.run(main())
