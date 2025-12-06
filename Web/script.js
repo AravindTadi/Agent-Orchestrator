@@ -42,7 +42,7 @@ function selectAgent(id) {
 
     // Reset Chat
     chatHistory = [];
-    document.getElementById('chat-header-name').innerText = agent.name;
+    // document.getElementById('chat-header-name').innerText = agent.name; // Removed
     document.getElementById('chat-history').innerHTML = `
         <div class="empty-state">
             Start chatting with ${agent.name}...
@@ -77,10 +77,14 @@ function saveAgentConfig() {
     agents[currentAgentId].system_prompt = prompt;
 
     renderAgentList();
-    document.getElementById('chat-header-name').innerText = name;
+    // document.getElementById('chat-header-name').innerText = name; // Removed as per request
 
     // In a real app, we would send this to the backend to persist
-    alert('Agent configuration saved!');
+
+    // Show Toast
+    const toast = document.getElementById("toast");
+    toast.className = "toast show";
+    setTimeout(function () { toast.className = toast.className.replace("show", ""); }, 3000);
 }
 
 function resetChat() {
