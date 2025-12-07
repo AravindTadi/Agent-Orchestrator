@@ -770,3 +770,199 @@ body {
     background-color: var(--input-bg);
     color: var(--text-primary);
 }
+
+/* Knowledge Base / RAG Styles */
+.knowledge-base-section label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.doc-count {
+    font-weight: 400;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: var(--input-bg);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--bg-color);
+    margin-bottom: 1rem;
+}
+
+.upload-area:hover,
+.upload-area.dragover {
+    border-color: var(--primary-blue);
+    background: rgba(15, 98, 254, 0.05);
+}
+
+.upload-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.upload-link {
+    color: var(--primary-blue);
+    font-weight: 500;
+}
+
+.url-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.url-input-group input {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-family: inherit;
+}
+
+.url-input-group input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+}
+
+.add-url-btn {
+    background: var(--surface-color);
+    border: 1px solid var(--primary-blue);
+    color: var(--primary-blue);
+    padding: 0.6rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.add-url-btn:hover {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.document-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.document-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: var(--input-bg);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.document-item:hover {
+    border-color: var(--primary-blue);
+}
+
+.document-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.document-icon {
+    font-size: 1.2rem;
+}
+
+.document-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.document-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.delete-doc-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    opacity: 0.6;
+    transition: all 0.2s;
+}
+
+.delete-doc-btn:hover {
+    opacity: 1;
+    color: #da1e28;
+    background: rgba(218, 30, 40, 0.1);
+}
+
+/* Upload Progress */
+.upload-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: var(--input-bg);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.upload-progress .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--primary-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Sources in Chat */
+.sources-section {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.sources-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    display: block;
+}
+
+.source-pill {
+    display: inline-block;
+    font-size: 0.7rem;
+    background: var(--input-bg);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    color: var(--text-secondary);
+}

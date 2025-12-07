@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agent Orchestrator</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
         rel="stylesheet">
 </head>
@@ -104,6 +104,38 @@
                                 </label>
                             </div>
                         </div>
+
+                        <!-- Knowledge Base Section -->
+                        <div class="form-group knowledge-base-section">
+                            <label>
+                                📚 Knowledge Base (RAG)
+                                <span class="doc-count" id="doc-count">0 documents</span>
+                            </label>
+
+                            <!-- Upload Area -->
+                            <div class="upload-area" id="upload-area"
+                                onclick="document.getElementById('file-input').click()"
+                                ondragover="handleDragOver(event)" ondrop="handleDrop(event)"
+                                ondragleave="handleDragLeave(event)">
+                                <input type="file" id="file-input" accept=".txt,.pdf,.docx,.doc,.csv" multiple hidden
+                                    onchange="handleFileSelect(event)">
+                                <div class="upload-icon">📄</div>
+                                <p>Drag & drop files here or <span class="upload-link">browse</span></p>
+                                <p class="hint">Supports: TXT, PDF, DOCX, CSV</p>
+                            </div>
+
+                            <!-- URL Input -->
+                            <div class="url-input-group">
+                                <input type="url" id="url-input" placeholder="https://example.com/page-to-learn-from"
+                                    onkeypress="if(event.key==='Enter') addUrl()">
+                                <button class="add-url-btn" onclick="addUrl()">+ Add URL</button>
+                            </div>
+
+                            <!-- Document List -->
+                            <div class="document-list" id="document-list">
+                                <!-- Documents will be rendered here -->
+                            </div>
+                        </div>
                 </main>
 
                 <!-- Right Sidebar: Chat -->
@@ -148,7 +180,7 @@
             </div> <!-- End orchestrator-layout -->
 
             <div id="toast" class="toast">Agent configuration saved!</div>
-            <script src="script.js"></script>
+            <script src="js/script.js"></script>
         </div> <!-- End main-content -->
     </div> <!-- End app-container -->
 </body>

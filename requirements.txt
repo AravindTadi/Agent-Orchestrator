@@ -1,2 +1,20 @@
+# Core
 groq
 python-dotenv
+fastapi
+uvicorn
+pydantic
+
+# MCP
+mcp
+boto3
+
+# RAG - Vector Store
+pymilvus
+sentence-transformers
+
+# RAG - Document Processing
+pypdf
+python-docx
+beautifulsoup4
+requests

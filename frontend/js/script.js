@@ -130,6 +130,9 @@ function selectAgent(id) {
     const sendBtn = document.getElementById('send-btn');
     if (userInput) userInput.disabled = false;
     if (sendBtn) sendBtn.disabled = false;
+
+    // Load Knowledge Base documents
+    loadDocuments();
 }
 
 function checkNameLimit(input) {
@@ -333,8 +336,8 @@ async function sendMessage() {
 
         const data = await response.json();
 
-        // Add Assistant Message (with reasoning if available)
-        addMessage('assistant', data.response, data.reasoning);
+        // Add Assistant Message (with reasoning and sources if available)
+        addMessage('assistant', data.response, data.reasoning, data.sources);
 
     } catch (error) {
         console.error(error);
@@ -345,7 +348,7 @@ async function sendMessage() {
     }
 }
 
-function addMessage(role, text, reasoning = null) {
+function addMessage(role, text, reasoning = null, sources = null) {
     const chatHistoryEl = document.getElementById('chat-history');
     const emptyState = chatHistoryEl.querySelector('.empty-state');
     if (emptyState) emptyState.remove();
@@ -357,20 +360,28 @@ function addMessage(role, text, reasoning = null) {
         // Simple Bubble for User
         msgDiv.innerText = text;
 
-        // Optional: Add timestamp for user too? 
-        // For now, keep it simple as per image (user bubble is simple)
-        // But image shows timestamp for user too "You 04:48 PM"
-        // Let's stick to simple bubble first, maybe add timestamp later if requested.
-        // Actually, let's add a small timestamp inside or above.
-        // The image shows "You 04:48 PM" above the bubble.
-        // For now, I'll put text inside.
-
     } else {
         // Complex Layout for Assistant
         const agentName = agents[currentAgentId]?.name || "Agent";
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         const hasReasoning = reasoning && reasoning.length > 0;
+        const hasSources = sources && sources.length > 0;
+
+        // Build sources HTML
+        let sourcesHtml = '';
+        if (hasSources) {
+            const pills = sources.map(s => {
+                const name = s.metadata?.filename || s.metadata?.title || s.document_id;
+                return `<span class="source-pill" title="Score: ${s.score}">${name}</span>`;
+            }).join('');
+            sourcesHtml = `
+                <div class="sources-section">
+                    <span class="sources-label">📚 Sources:</span>
+                    ${pills}
+                </div>
+            `;
+        }
 
         msgDiv.innerHTML = `
             <div class="assistant-avatar">
@@ -393,6 +404,7 @@ function addMessage(role, text, reasoning = null) {
                 </div>
                 <div class="message-text">${text}</div>
                 ${hasReasoning ? `<div class="reasoning-content">${reasoning}</div>` : ''}
+                ${sourcesHtml}
             </div>
         `;
     }
@@ -416,3 +428,251 @@ function toggleReasoning(btn) {
         btn.innerHTML = `Show Reasoning <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"></path></svg>`;
     }
 }
+
+// ==========================================
+// DOCUMENT MANAGEMENT (RAG)
+// ==========================================
+
+async function loadDocuments() {
+    if (!currentAgentId) return;
+
+    try {
+        const response = await fetch(`http://localhost:8000/documents/${currentAgentId}`);
+        const data = await response.json();
+
+        renderDocumentList(data.documents || []);
+        updateDocCount(data.count || 0);
+    } catch (error) {
+        console.error('Error loading documents:', error);
+    }
+}
+
+function renderDocumentList(documents) {
+    const list = document.getElementById('document-list');
+    if (!list) return;
+
+    if (documents.length === 0) {
+        list.innerHTML = '<p class="hint" style="text-align:center;">No documents yet. Upload files or add URLs.</p>';
+        return;
+    }
+
+    list.innerHTML = documents.map(doc => {
+        const meta = doc.metadata || {};
+        const icon = getDocIcon(meta.type);
+        const name = meta.filename || meta.title || meta.url || doc.document_id;
+        const info = meta.chunks ? `${meta.chunks} chunks` : '';
+
+        return `
+            <div class="document-item" data-id="${doc.document_id}">
+                <div class="document-info">
+                    <span class="document-icon">${icon}</span>
+                    <span class="document-name" title="${name}">${name}</span>
+                    <span class="document-meta">${info}</span>
+                </div>
+                <button class="delete-doc-btn" onclick="deleteDocument('${doc.document_id}')" title="Delete">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path>
+                    </svg>
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function getDocIcon(type) {
+    const icons = {
+        'txt': '📄',
+        'pdf': '📕',
+        'docx': '📘',
+        'doc': '📘',
+        'csv': '📊',
+        'web': '🌐'
+    };
+    return icons[type] || '📄';
+}
+
+function updateDocCount(count) {
+    const el = document.getElementById('doc-count');
+    if (el) {
+        el.textContent = `${count} document${count !== 1 ? 's' : ''}`;
+    }
+}
+
+// Drag & Drop Handlers
+function handleDragOver(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.classList.add('dragover');
+}
+
+function handleDragLeave(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.classList.remove('dragover');
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.classList.remove('dragover');
+
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+        uploadFiles(files);
+    }
+}
+
+function handleFileSelect(event) {
+    const files = event.target.files;
+    if (files.length > 0) {
+        uploadFiles(files);
+    }
+    // Reset input so same file can be selected again
+    event.target.value = '';
+}
+
+async function uploadFiles(files) {
+    if (!currentAgentId) {
+        alert('Please select or create an agent first.');
+        return;
+    }
+
+    const documentList = document.getElementById('document-list');
+
+    for (const file of files) {
+        // Show upload progress
+        const progressId = `upload_${Date.now()}`;
+        const progressEl = document.createElement('div');
+        progressEl.className = 'upload-progress';
+        progressEl.id = progressId;
+        progressEl.innerHTML = `<div class="spinner"></div><span>Uploading ${file.name}...</span>`;
+        documentList.insertBefore(progressEl, documentList.firstChild);
+
+        try {
+            const formData = new FormData();
+            formData.append('agent_id', currentAgentId);
+            formData.append('file', file);
+
+            const response = await fetch('http://localhost:8000/documents/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Upload failed');
+            }
+
+            const data = await response.json();
+            console.log('Upload success:', data);
+
+            // Remove progress and refresh list
+            document.getElementById(progressId)?.remove();
+            loadDocuments();
+
+            // Show toast
+            showToast(`✅ Uploaded: ${file.name}`);
+
+        } catch (error) {
+            console.error('Upload error:', error);
+            const progress = document.getElementById(progressId);
+            if (progress) {
+                progress.innerHTML = `<span style="color:#da1e28;">❌ Failed: ${file.name}</span>`;
+                setTimeout(() => progress.remove(), 3000);
+            }
+        }
+    }
+}
+
+async function addUrl() {
+    const input = document.getElementById('url-input');
+    const url = input.value.trim();
+
+    if (!url) return;
+    if (!currentAgentId) {
+        alert('Please select or create an agent first.');
+        return;
+    }
+
+    // Validate URL
+    try {
+        new URL(url);
+    } catch {
+        alert('Please enter a valid URL.');
+        return;
+    }
+
+    const documentList = document.getElementById('document-list');
+
+    // Show progress
+    const progressId = `upload_${Date.now()}`;
+    const progressEl = document.createElement('div');
+    progressEl.className = 'upload-progress';
+    progressEl.id = progressId;
+    progressEl.innerHTML = `<div class="spinner"></div><span>Fetching ${url}...</span>`;
+    documentList.insertBefore(progressEl, documentList.firstChild);
+
+    input.value = '';
+
+    try {
+        const response = await fetch('http://localhost:8000/documents/url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                agent_id: currentAgentId,
+                url: url
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to add URL');
+        }
+
+        const data = await response.json();
+        console.log('URL added:', data);
+
+        document.getElementById(progressId)?.remove();
+        loadDocuments();
+
+        showToast(`✅ Added: ${url}`);
+
+    } catch (error) {
+        console.error('URL add error:', error);
+        const progress = document.getElementById(progressId);
+        if (progress) {
+            progress.innerHTML = `<span style="color:#da1e28;">❌ Failed: ${error.message}</span>`;
+            setTimeout(() => progress.remove(), 3000);
+        }
+    }
+}
+
+async function deleteDocument(documentId) {
+    if (!currentAgentId) return;
+
+    if (!confirm('Delete this document from the knowledge base?')) return;
+
+    try {
+        const response = await fetch(`http://localhost:8000/documents/${currentAgentId}/${documentId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Delete failed');
+
+        loadDocuments();
+        showToast('🗑️ Document deleted');
+
+    } catch (error) {
+        console.error('Delete error:', error);
+        showToast('❌ Failed to delete document');
+    }
+}
+
+function showToast(message) {
+    const toast = document.getElementById("toast");
+    if (!toast) return;
+    toast.innerText = message;
+    toast.className = "toast show";
+    setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+}
+
