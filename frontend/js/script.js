@@ -1,13 +1,8 @@
-// Load agents from LocalStorage (shared with index.html)
-let agents = JSON.parse(localStorage.getItem('mcp_agents')) || {
-    "agent_default": {
-        id: "agent_default",
-        name: "My First Agent",
-        description: "A helpful AI assistant ready to be configured.",
-        system_prompt: "You are a helpful AI assistant."
-    }
-};
+// API Base URL
+const API_BASE = 'http://localhost:8000';
 
+// Agents storage (populated from API)
+let agents = {};
 let currentAgentId = null;
 let chatHistory = [];
 
@@ -16,9 +11,9 @@ function toggleSidebar() {
     document.getElementById('sidebar-overlay').classList.toggle('show');
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    renderAgentList();
+// Initialize - Load agents from API
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadAgentsFromAPI();
 
     // Check URL params
     const urlParams = new URLSearchParams(window.location.search);
@@ -35,6 +30,35 @@ document.addEventListener('DOMContentLoaded', () => {
         if (firstId) selectAgent(firstId);
     }
 });
+
+// Load agents from backend API
+async function loadAgentsFromAPI() {
+    try {
+        const response = await fetch(`${API_BASE}/agents`);
+        if (!response.ok) throw new Error('Failed to load agents');
+
+        const data = await response.json();
+        agents = {};
+        data.agents.forEach(agent => {
+            agents[agent.id] = agent;
+        });
+
+        renderAgentList();
+        console.log(`✅ Loaded ${data.count} agents from API`);
+    } catch (error) {
+        console.error('Error loading agents from API:', error);
+        // Fallback to localStorage if API fails
+        agents = JSON.parse(localStorage.getItem('mcp_agents')) || {
+            "agent_default": {
+                id: "agent_default",
+                name: "My First Agent",
+                description: "A helpful AI assistant ready to be configured.",
+                system_prompt: "You are a helpful AI assistant."
+            }
+        };
+        renderAgentList();
+    }
+}
 
 function initCreateMode() {
     currentAgentId = null; // No ID yet
@@ -175,7 +199,7 @@ const autoSaveAgentConfig = debounce(() => {
     saveAgentConfig(true); // true = silent mode (optional, see below)
 }, 1000);
 
-function saveAgentConfig(silent = false) {
+async function saveAgentConfig(silent = false) {
     const nameHeader = document.getElementById('agent-name-header');
     const descInput = document.getElementById('agent-desc');
     const promptInput = document.getElementById('agent-prompt');
@@ -191,58 +215,79 @@ function saveAgentConfig(silent = false) {
         return;
     }
 
-    // If creating new agent
-    if (!currentAgentId) {
-        // Don't autosave new agents until they have a name and are explicitly saved first time?
-        // Or just create it? Let's create it if name exists.
-        const id = `agent_${Date.now()}`;
-        agents[id] = {
-            id: id,
-            name: name,
-            description: desc,
-            system_prompt: prompt
-        };
-        currentAgentId = id;
+    try {
+        // If creating new agent
+        if (!currentAgentId) {
+            const response = await fetch(`${API_BASE}/agents`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    description: desc,
+                    system_prompt: prompt
+                })
+            });
 
-        // Update URL without reloading
-        window.history.pushState({}, '', `orchestrator.html?agent=${id}`);
+            if (!response.ok) throw new Error('Failed to create agent');
 
-        // Enable Chat
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-        if (userInput) userInput.disabled = false;
-        if (sendBtn) sendBtn.disabled = false;
+            const data = await response.json();
+            const newAgent = data.agent;
+            currentAgentId = newAgent.id;
+            agents[currentAgentId] = newAgent;
 
-        // Reset Chat UI for new agent
-        const agent = agents[currentAgentId];
-        const chatHistoryEl = document.getElementById('chat-history');
-        if (chatHistoryEl) {
-            chatHistoryEl.innerHTML = `
-                <div class="empty-state">
-                    Start chatting with ${agent.name}...
-                </div>
-            `;
+            // Update URL without reloading
+            window.history.pushState({}, '', `orchestrator.html?agent=${currentAgentId}`);
+
+            // Enable Chat
+            const userInput = document.getElementById('user-input');
+            const sendBtn = document.getElementById('send-btn');
+            if (userInput) userInput.disabled = false;
+            if (sendBtn) sendBtn.disabled = false;
+
+            // Reset Chat UI for new agent
+            const chatHistoryEl = document.getElementById('chat-history');
+            if (chatHistoryEl) {
+                chatHistoryEl.innerHTML = `
+                    <div class="empty-state">
+                        Start chatting with ${newAgent.name}...
+                    </div>
+                `;
+            }
+        } else {
+            // Updating existing agent
+            const response = await fetch(`${API_BASE}/agents/${currentAgentId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    description: desc,
+                    system_prompt: prompt
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to update agent');
+
+            const data = await response.json();
+            agents[currentAgentId] = data.agent;
         }
-    } else {
-        // Updating existing agent
-        agents[currentAgentId].name = name;
-        agents[currentAgentId].description = desc;
-        agents[currentAgentId].system_prompt = prompt;
+
+        // Also save to localStorage as backup
+        localStorage.setItem('mcp_agents', JSON.stringify(agents));
+
+        renderAgentList();
+
+        // Show Toast
+        const toast = document.getElementById("toast");
+        toast.innerText = "Configuration Saved ✓";
+        toast.className = "toast show";
+        setTimeout(function () { toast.className = toast.className.replace("show", ""); }, 2000);
+
+    } catch (error) {
+        console.error('Save error:', error);
+        if (!silent) {
+            showToast('❌ Failed to save: ' + error.message);
+        }
     }
-
-    // Persist to LocalStorage
-    localStorage.setItem('mcp_agents', JSON.stringify(agents));
-
-    renderAgentList();
-
-    // Show Toast (only if not silent, or maybe show a subtle one?)
-    // For autosave, we usually want a subtle indicator. 
-    // Let's use the toast but maybe change text? 
-    // For now, I'll keep the toast but maybe we can make it less intrusive later.
-    const toast = document.getElementById("toast");
-    toast.innerText = "Configuration Saved";
-    toast.className = "toast show";
-    setTimeout(function () { toast.className = toast.className.replace("show", ""); }, 2000);
 }
 
 // Theme Management

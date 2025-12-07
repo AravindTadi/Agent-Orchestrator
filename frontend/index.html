@@ -158,25 +158,42 @@
     </div>
 
     <script>
+        const API_BASE = 'http://localhost:8000';
+        let agents = {};
+
         function toggleSidebar() {
             document.getElementById('main-nav').classList.toggle('open');
             document.getElementById('sidebar-overlay').classList.toggle('show');
         }
 
-        // Shared Agent Data (Simulated Persistence)
-        // In a real app, this would come from the backend API
-        let agents = JSON.parse(localStorage.getItem('mcp_agents')) || {
-            "agent_default": {
-                id: "agent_default",
-                name: "My First Agent",
-                description: "A helpful AI assistant ready to be configured.",
-                system_prompt: "You are a helpful AI assistant."
+        async function loadAgents() {
+            try {
+                const response = await fetch(`${API_BASE}/agents`);
+                if (!response.ok) throw new Error('Failed to load agents');
+
+                const data = await response.json();
+                agents = {};
+                data.agents.forEach(agent => {
+                    agents[agent.id] = agent;
+                });
+                renderGrid();
+            } catch (error) {
+                console.error('Error loading agents:', error);
+                // Fallback to localStorage
+                agents = JSON.parse(localStorage.getItem('mcp_agents')) || {
+                    "agent_default": {
+                        id: "agent_default",
+                        name: "My First Agent",
+                        description: "A helpful AI assistant ready to be configured.",
+                        system_prompt: "You are a helpful AI assistant."
+                    }
+                };
+                renderGrid();
             }
-        };
+        }
 
         function renderGrid() {
             const grid = document.getElementById('agent-grid');
-            // Remove existing cards (keep the create button which is last)
             const createBtn = grid.lastElementChild;
             grid.innerHTML = '';
 
@@ -195,12 +212,11 @@
         }
 
         function createNewAgent() {
-            // Redirect to orchestrator in create mode
             window.location.href = `orchestrator.html?mode=create`;
         }
 
-        // Initial Render
-        renderGrid();
+        // Load agents on page load
+        loadAgents();
     </script>
 </body>
 

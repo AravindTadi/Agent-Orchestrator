@@ -1,10 +1,13 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from groq import Groq
 import os
 import json
+import uuid
+import logging
 from typing import List, Optional, Dict, Any
 from contextlib import asynccontextmanager, AsyncExitStack
 
@@ -12,9 +15,14 @@ from contextlib import asynccontextmanager, AsyncExitStack
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-# Local Imports (using relative imports within package)
+# Local Imports
 from backend.rag import vector_store, document_processor
 from backend.config import GROQ_API_KEY, MCP_SERVER_PATH, FRONTEND_DIR
+from backend import database
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # --- MCP Client Setup ---
 # We need a global session to keep the connection open
@@ -67,6 +75,10 @@ async def lifespan(app: FastAPI):
             # Initialize Vector Store for RAG
             print("🧠 Initializing Vector Store...")
             vector_store.init()
+            
+            # Initialize Database
+            print("💾 Initializing Database...")
+            database.init_db()
             
             # Yield control back to FastAPI to run the app
             yield
@@ -342,7 +354,109 @@ async def get_stats():
     return vector_store.get_stats()
 
 
+# --- Agent CRUD Endpoints ---
+
+class AgentCreate(BaseModel):
+    name: str
+    description: str = ""
+    system_prompt: str = "You are a helpful AI assistant."
+
+class AgentUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    system_prompt: Optional[str] = None
+    model: Optional[str] = None
+
+
+@app.get("/agents")
+async def list_agents():
+    """List all agents."""
+    agents = database.get_all_agents()
+    return {"agents": agents, "count": len(agents)}
+
+
+@app.post("/agents")
+async def create_agent(agent: AgentCreate):
+    """Create a new agent."""
+    agent_id = f"agent_{uuid.uuid4().hex[:8]}"
+    try:
+        new_agent = database.create_agent(
+            agent_id=agent_id,
+            name=agent.name,
+            description=agent.description,
+            system_prompt=agent.system_prompt
+        )
+        logger.info(f"Created agent: {agent_id}")
+        return {"success": True, "agent": new_agent}
+    except Exception as e:
+        logger.error(f"Error creating agent: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/agents/{agent_id}")
+async def get_agent(agent_id: str):
+    """Get an agent by ID."""
+    agent = database.get_agent(agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return agent
+
+
+@app.put("/agents/{agent_id}")
+async def update_agent(agent_id: str, agent: AgentUpdate):
+    """Update an agent."""
+    existing = database.get_agent(agent_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    updates = {k: v for k, v in agent.dict().items() if v is not None}
+    updated = database.update_agent(agent_id, **updates)
+    logger.info(f"Updated agent: {agent_id}")
+    return {"success": True, "agent": updated}
+
+
+@app.delete("/agents/{agent_id}")
+async def delete_agent(agent_id: str):
+    """Delete an agent."""
+    if agent_id == "agent_default":
+        raise HTTPException(status_code=400, detail="Cannot delete default agent")
+    
+    success = database.delete_agent(agent_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    logger.info(f"Deleted agent: {agent_id}")
+    return {"success": True, "agent_id": agent_id}
+
+
+# --- Health Check ---
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "mcp_connected": mcp_session is not None,
+        "tools_loaded": len(mcp_tools),
+        "groq_configured": GROQ_API_KEY is not None
+    }
+
+
+# --- Global Error Handler ---
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Catch all unhandled exceptions."""
+    logger.error(f"Unhandled error: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "detail": str(exc) if os.getenv("DEBUG") else "An unexpected error occurred"
+        }
+    )
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
