@@ -68,18 +68,22 @@ function initCreateMode() {
     const descInput = document.getElementById('agent-desc');
     const promptInput = document.getElementById('agent-prompt');
     const deleteBtn = document.getElementById('delete-agent-btn');
+    const saveBtn = document.getElementById('save-agent-btn');
+    const formActions = document.getElementById('form-actions');
 
     if (nameHeader) nameHeader.value = "";
     if (descInput) descInput.value = "";
     if (promptInput) promptInput.value = "";
     if (deleteBtn) deleteBtn.style.display = 'none'; // Hide delete for new agents
+    if (formActions) formActions.style.display = 'block'; // Show save button area
+    if (saveBtn) saveBtn.textContent = '💾 Create Agent'; // Change button text
 
     // Reset Chat to Empty
     const chatHistory = document.getElementById('chat-history');
     if (chatHistory) {
         chatHistory.innerHTML = `
             <div class="empty-state">
-                Configure your new agent and click Save to create it.
+                Configure your new agent and click "Create Agent" to save it.
             </div>
         `;
     }
@@ -160,6 +164,10 @@ function selectAgent(id) {
         deleteBtn.style.display = 'flex';
         deleteBtn.disabled = (id === 'agent_default');
     }
+
+    // Hide save button for existing agents (autosave handles updates)
+    const formActions = document.getElementById('form-actions');
+    if (formActions) formActions.style.display = 'none';
 
     // Reset Chat
     chatHistory = [];
@@ -276,6 +284,20 @@ async function saveAgentConfig(silent = false) {
                     </div>
                 `;
             }
+
+            // Show delete button after creating
+            const deleteBtn = document.getElementById('delete-agent-btn');
+            if (deleteBtn) {
+                deleteBtn.style.display = 'flex';
+                deleteBtn.disabled = false;
+            }
+
+            // Hide the save button (agent is now created)
+            const formActions = document.getElementById('form-actions');
+            if (formActions) formActions.style.display = 'none';
+
+            // Reload documents for this new agent
+            loadDocuments();
         } else {
             // Updating existing agent
             const response = await fetch(`${API_BASE}/agents/${currentAgentId}`, {

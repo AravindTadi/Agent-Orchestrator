@@ -1028,3 +1028,33 @@ body {
     flex-wrap: wrap;
     gap: 1rem;
 }
+
+/* Form Actions - Save Button */
+.form-actions {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.save-agent-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary-blue);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.save-agent-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.save-agent-btn:active {
+    transform: translateY(0);
+}
