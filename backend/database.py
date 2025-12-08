@@ -79,15 +79,42 @@ def init_db():
 
 # --- Agent CRUD Operations ---
 
-def create_agent(agent_id: str, name: str, description: str = "", system_prompt: str = "") -> Dict:
+def create_agent(agent_id: str, name: str, description: str = "", system_prompt: str = "", model: str = "llama-3.3-70b-versatile") -> Dict:
     """Create a new agent."""
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO agents (id, name, description, system_prompt)
-            VALUES (?, ?, ?, ?)
-        """, (agent_id, name, description, system_prompt))
+            INSERT INTO agents (id, name, description, system_prompt, model)
+            VALUES (?, ?, ?, ?, ?)
+        """, (agent_id, name, description, system_prompt, model))
         
+    return get_agent(agent_id)
+
+
+def save_agent(agent_data: Dict[str, Any]) -> Dict:
+    """Save (Upsert) an agent."""
+    agent_id = agent_data.get("id")
+    name = agent_data.get("name")
+    description = agent_data.get("description", "")
+    system_prompt = agent_data.get("system_prompt", "")
+    model = agent_data.get("model", "llama-3.3-70b-versatile")
+    
+    with get_db() as conn:
+        cursor = conn.cursor()
+        # Check if exists
+        cursor.execute("SELECT id FROM agents WHERE id = ?", (agent_id,))
+        if cursor.fetchone():
+            cursor.execute("""
+                UPDATE agents 
+                SET name = ?, description = ?, system_prompt = ?, model = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (name, description, system_prompt, model, agent_id))
+        else:
+            cursor.execute("""
+                INSERT INTO agents (id, name, description, system_prompt, model)
+                VALUES (?, ?, ?, ?, ?)
+            """, (agent_id, name, description, system_prompt, model))
+            
     return get_agent(agent_id)
 
 

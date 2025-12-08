@@ -18,7 +18,8 @@ from mcp.client.stdio import stdio_client
 # Local Imports
 from backend.rag import vector_store, document_processor
 from backend.config import GROQ_API_KEY, MCP_SERVER_PATH, FRONTEND_DIR
-from backend import database, auth
+from backend import database, auth, settings, monitoring
+
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -70,7 +71,7 @@ async def lifespan(app: FastAPI):
                     }
                 })
                 
-            print(f"✅ MCP Connected! Loaded {len(mcp_tools)} tools: {[t['function']['name'] for t in mcp_tools]}")
+            logger.info(f"✅ MCP Connected! Loaded {len(mcp_tools)} tools: {[t['function']['name'] for t in mcp_tools]}")
             
             # Initialize Vector Store for RAG
             print("🧠 Initializing Vector Store...")
@@ -79,16 +80,40 @@ async def lifespan(app: FastAPI):
             # Initialize Database
             print("💾 Initializing Database...")
             database.init_db()
+
+            # Initialize Monitoring (Load from first user with settings)
+            try:
+                conn = settings.get_connection()
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM integration_settings ORDER BY updated_at DESC LIMIT 1")
+                row = cursor.fetchone()
+                conn.close()
+                
+                if row:
+                    if row['aws_access_key']:
+                        monitoring.monitor.configure_aws(
+                            row['aws_access_key'], row['aws_secret_key'], 
+                            row['aws_region'], row['aws_log_group']
+                        )
+                    if row['dd_api_key']:
+                        monitoring.monitor.configure_datadog(row['dd_api_key'], row['dd_site'])
+                    print("✅ Monitoring initialized from saved settings")
+                    logger.info("Monitoring initialized from saved settings.")
+            except Exception as e:
+                print(f"⚠️ Failed to load monitoring settings: {e}")
+                logger.warning(f"Failed to load monitoring settings: {e}")
             
             # Yield control back to FastAPI to run the app
             yield
             
         except Exception as e:
             print(f"❌ Error during MCP startup: {e}")
+            logger.error(f"Error during MCP startup: {e}")
             # If startup fails, we still yield so the app can crash gracefully or show error
             yield
         finally:
             print("🔌 Closing MCP Connection...")
+            logger.info("Closing MCP Connection...")
             # The AsyncExitStack will automatically close session and transport here
 
 
@@ -152,6 +177,7 @@ async def chat(request: ChatRequest):
                 rag_context = "\n\n".join(context_parts)
         except Exception as e:
             print(f"⚠️ RAG search error: {e}")
+            monitoring.monitor.log_event("ERROR", f"RAG search error for agent {request.agent_id}: {e}", metadata={"agent_id": request.agent_id, "query": request.message})
     
     # Build system prompt with RAG context
     enhanced_prompt = request.system_prompt
@@ -198,6 +224,7 @@ Use the following information to help answer the user's question. If the informa
         # 2. Check if LLM wants to use a tool
         if response_message.tool_calls:
             print(f"🛠️ Agent wants to use tools: {len(response_message.tool_calls)}")
+            monitoring.monitor.log_event("INFO", f"Agent {request.agent_id} requested tool calls", metadata={"agent_id": request.agent_id, "tool_calls": [tc.function.name for tc in response_message.tool_calls]})
             
             # Add the assistant's "thought" (tool call request) to history
             messages.append(response_message)
@@ -219,6 +246,7 @@ Use the following information to help answer the user's question. If the informa
                 
                 print(f"   ✅ Result: {tool_output}")
                 reasoning_parts.append(f"📤 Result: {tool_output}")
+                monitoring.monitor.log_event("INFO", f"Tool {function_name} executed for agent {request.agent_id}", metadata={"agent_id": request.agent_id, "tool_name": function_name, "tool_args": function_args, "tool_output_len": len(tool_output)})
 
                 # Add result to history
                 messages.append({
@@ -233,6 +261,7 @@ Use the following information to help answer the user's question. If the informa
                 model=request.model,
                 messages=messages
             )
+            monitoring.monitor.log_event("INFO", f"Agent {request.agent_id} completed chat with tool use", metadata={"agent_id": request.agent_id, "model": request.model, "input_tokens": completion.usage.prompt_tokens + second_completion.usage.prompt_tokens, "output_tokens": completion.usage.completion_tokens + second_completion.usage.completion_tokens})
             return {
                 "response": second_completion.choices[0].message.content,
                 "reasoning": "\n".join(reasoning_parts) if reasoning_parts else None,
@@ -241,6 +270,7 @@ Use the following information to help answer the user's question. If the informa
             
         else:
             # No tool used, just return text
+            monitoring.monitor.log_event("INFO", f"Agent {request.agent_id} completed chat without tool use", metadata={"agent_id": request.agent_id, "model": request.model, "input_tokens": completion.usage.prompt_tokens, "output_tokens": completion.usage.completion_tokens})
             return {
                 "response": response_message.content,
                 "reasoning": None,
@@ -249,6 +279,7 @@ Use the following information to help answer the user's question. If the informa
 
     except Exception as e:
         print(f"Error: {e}")
+        monitoring.monitor.log_event("ERROR", f"Chat error for agent {request.agent_id}: {e}", metadata={"agent_id": request.agent_id, "model": request.model, "user_message": request.message})
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -360,6 +391,7 @@ class AgentCreate(BaseModel):
     name: str
     description: str = ""
     system_prompt: str = "You are a helpful AI assistant."
+    model: str = "llama-3.3-70b-versatile" # Default model
 
 class AgentUpdate(BaseModel):
     name: Optional[str] = None
@@ -380,14 +412,20 @@ async def create_agent(agent: AgentCreate):
     """Create a new agent."""
     agent_id = f"agent_{uuid.uuid4().hex[:8]}"
     try:
-        new_agent = database.create_agent(
-            agent_id=agent_id,
-            name=agent.name,
-            description=agent.description,
-            system_prompt=agent.system_prompt
-        )
+        # Save to DB
+        agent_data = {
+            "id": agent_id,
+            "name": agent.name,
+            "description": agent.description,
+            "system_prompt": agent.system_prompt,
+            "model": agent.model
+        }
+        database.save_agent(agent_data)
         logger.info(f"Created agent: {agent_id}")
-        return {"success": True, "agent": new_agent}
+        
+        monitoring.monitor.log_event("INFO", f"Created agent: {agent.name}", metadata={"agent_id": agent_id})
+        
+        return {"success": True, "agent": agent_data}
     except Exception as e:
         logger.error(f"Error creating agent: {e}")
         raise HTTPException(status_code=400, detail=str(e))
@@ -434,6 +472,8 @@ async def delete_agent(agent_id: str):
         raise HTTPException(status_code=404, detail="Agent not found")
     
     logger.info(f"Deleted agent: {agent_id}")
+    monitoring.monitor.log_event("INFO", f"Deleted agent: {agent_id}", metadata={"deleted_chunks": deleted_chunks if 'deleted_chunks' in dir() else 0})
+    
     return {"success": True, "agent_id": agent_id, "deleted_chunks": deleted_chunks if 'deleted_chunks' in dir() else 0}
 
 
@@ -475,10 +515,14 @@ async def login(request: AuthRequest):
     """Login and get a session token."""
     user = auth.verify_user(request.email, request.password)
     if not user:
+        monitoring.monitor.log_event("WARN", f"Failed login attempt: {request.email}")
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
     token = auth.create_session(user["id"])
     logger.info(f"User logged in: {request.email}")
+    
+    monitoring.monitor.log_event("INFO", "User logged in", request.email)
+    
     return {
         "success": True,
         "token": token,
@@ -510,10 +554,96 @@ async def get_current_user(authorization: str = Header(None)):
     return {"success": True, "user": user}
 
 
+# --- Settings & Monitoring Endpoints ---
+
+class AWSSettings(BaseModel):
+    access_key: str
+    secret_key: str
+    region: str
+    log_group: str
+
+class DatadogSettings(BaseModel):
+    api_key: str
+    site: str
+
+@app.post("/settings/aws")
+async def save_aws_config(config: AWSSettings, authorization: str = Header(None)):
+    """Save AWS CloudWatch configuration."""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    token = authorization.replace("Bearer ", "")
+    user = auth.verify_session(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Session expired")
+        
+    settings.save_aws_settings(
+        user["user_id"], 
+        config.access_key, 
+        config.secret_key, 
+        config.region, 
+        config.log_group
+    )
+    
+    # Configure monitor immediately
+    monitoring.monitor.configure_aws(
+        config.access_key, 
+        config.secret_key, 
+        config.region, 
+        config.log_group
+    )
+    
+    monitoring.monitor.log_event("INFO", "AWS CloudWatch integration configured", user["email"])
+    return {"success": True}
+
+@app.post("/settings/datadog")
+async def save_datadog_config(config: DatadogSettings, authorization: str = Header(None)):
+    """Save Datadog configuration."""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    token = authorization.replace("Bearer ", "")
+    user = auth.verify_session(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Session expired")
+        
+    settings.save_datadog_settings(user["user_id"], config.api_key, config.site)
+    
+    # Configure monitor immediately
+    monitoring.monitor.configure_datadog(config.api_key, config.site)
+    
+    monitoring.monitor.log_event("INFO", "Datadog integration configured", user["email"])
+    return {"success": True}
+
+@app.get("/settings")
+async def get_user_settings(authorization: str = Header(None)):
+    """Get current user settings."""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    token = authorization.replace("Bearer ", "")
+    user = auth.verify_session(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Session expired")
+        
+    user_settings = settings.get_settings(user["user_id"])
+    
+    # Mask secrets
+    if "aws_secret_key" in user_settings:
+        user_settings["aws_secret_key"] = "********"
+    if "dd_api_key" in user_settings:
+        user_settings["dd_api_key"] = "********"
+        
+    return {"success": True, "settings": user_settings}
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Catch all unhandled exceptions."""
     logger.error(f"Unhandled error: {exc}", exc_info=True)
+    
+    # Log to monitoring
+    monitoring.monitor.log_event("ERROR", f"Unhandled exception: {str(exc)}", metadata={"path": request.url.path})
+    
     return JSONResponse(
         status_code=500,
         content={

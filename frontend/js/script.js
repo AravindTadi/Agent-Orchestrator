@@ -854,6 +854,135 @@ function openProfile() {
     window.location.href = 'login.html';
 }
 
+// --- Settings & Integrations ---
+
+function openSettings() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        loadSettings();
+    }
+}
+
+function closeSettings() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function switchSettingsTab(tab) {
+    const tabs = document.querySelectorAll('.settings-tab');
+    const contents = document.querySelectorAll('.settings-content');
+
+    tabs.forEach(t => t.classList.remove('active'));
+    contents.forEach(c => c.style.display = 'none');
+
+    if (tab === 'aws') {
+        tabs[0].classList.add('active');
+        document.getElementById('aws-settings').style.display = 'block';
+    } else {
+        tabs[1].classList.add('active');
+        document.getElementById('datadog-settings').style.display = 'block';
+    }
+}
+
+async function loadSettings() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        const response = await fetch(`${API_BASE}/settings`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const s = data.settings;
+
+            if (s.aws_access_key) document.getElementById('aws-access-key').value = s.aws_access_key;
+            if (s.aws_secret_key) document.getElementById('aws-secret-key').value = s.aws_secret_key; // Will be masked
+            if (s.aws_region) document.getElementById('aws-region').value = s.aws_region;
+            if (s.aws_log_group) document.getElementById('aws-log-group').value = s.aws_log_group;
+
+            if (s.dd_api_key) document.getElementById('dd-api-key').value = s.dd_api_key; // Will be masked
+            if (s.dd_site) document.getElementById('dd-site').value = s.dd_site;
+        }
+    } catch (error) {
+        console.error('Failed to load settings:', error);
+    }
+}
+
+async function saveAwsSettings() {
+    const accessKey = document.getElementById('aws-access-key').value;
+    const secretKey = document.getElementById('aws-secret-key').value;
+    const region = document.getElementById('aws-region').value;
+    const logGroup = document.getElementById('aws-log-group').value;
+
+    if (!accessKey || !secretKey || !region) {
+        showToast('❌ Please fill in all AWS fields');
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`${API_BASE}/settings/aws`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                access_key: accessKey,
+                secret_key: secretKey,
+                region: region,
+                log_group: logGroup
+            })
+        });
+
+        if (response.ok) {
+            showToast('✅ AWS Settings Saved');
+            closeSettings();
+        } else {
+            throw new Error('Failed to save');
+        }
+    } catch (error) {
+        showToast('❌ Error saving settings');
+    }
+}
+
+async function saveDatadogSettings() {
+    const apiKey = document.getElementById('dd-api-key').value;
+    const site = document.getElementById('dd-site').value;
+
+    if (!apiKey) {
+        showToast('❌ Please enter Datadog API Key');
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`${API_BASE}/settings/datadog`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                api_key: apiKey,
+                site: site
+            })
+        });
+
+        if (response.ok) {
+            showToast('✅ Datadog Settings Saved');
+            closeSettings();
+        } else {
+            throw new Error('Failed to save');
+        }
+    } catch (error) {
+        showToast('❌ Error saving settings');
+    }
+}
+
 // Toggle theme helper for index.html
 function toggleTheme() {
     const html = document.documentElement;
