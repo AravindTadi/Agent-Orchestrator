@@ -559,7 +559,7 @@ function renderDocumentList(documents) {
                     <span class="document-name" title="${name}">${name}</span>
                     <span class="document-meta">${info}</span>
                 </div>
-                <button class="delete-doc-btn" onclick="deleteDocument('${doc.document_id}')" title="Delete">
+                <button class="delete-doc-btn" onclick="deleteDocument('${doc.document_id}', event)" title="Delete" type="button">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                         <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path>
                     </svg>
@@ -737,13 +737,18 @@ async function addUrl() {
     }
 }
 
-async function deleteDocument(documentId) {
+async function deleteDocument(documentId, event) {
+    // Prevent event bubbling
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
     if (!currentAgentId) return;
 
-    if (!confirm('Delete this document from the knowledge base?')) return;
-
+    // No confirmation needed for documents - they can be re-uploaded
     try {
-        const response = await fetch(`http://localhost:8000/documents/${currentAgentId}/${documentId}`, {
+        const response = await fetch(`${API_BASE}/documents/${currentAgentId}/${documentId}`, {
             method: 'DELETE'
         });
 
