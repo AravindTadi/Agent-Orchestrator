@@ -849,9 +849,9 @@ function createNewAgent() {
     window.location.href = 'orchestrator.html?mode=create';
 }
 
-// Profile button placeholder (for future use)
+// Profile button - redirect to login/profile page
 function openProfile() {
-    showToast('🔜 Profile feature coming soon!');
+    window.location.href = 'login.html';
 }
 
 // Toggle theme helper for index.html

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AgentHub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Login Page Specific Styles */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            background: linear-gradient(135deg, #0f62fe 0%, #6929c4 50%, #9f1853 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            animation: pulse 15s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.3;
+            }
+        }
+
+        /* Left Side - Branding */
+        .auth-branding {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px;
+            color: white;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .auth-logo svg {
+            width: 48px;
+            height: 48px;
+        }
+
+        .auth-tagline {
+            font-size: 1.5rem;
+            font-weight: 300;
+            opacity: 0.9;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        .auth-features {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .auth-feature {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1rem;
+            opacity: 0.85;
+        }
+
+        .auth-feature-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* Right Side - Form */
+        .auth-form-container {
+            width: 480px;
+            background: var(--surface-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px;
+            position: relative;
+            z-index: 1;
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .auth-form-header {
+            margin-bottom: 40px;
+        }
+
+        .auth-form-header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .auth-form-header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 15px;
+            background: transparent;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .auth-tab.active {
+            color: var(--primary-blue);
+        }
+
+        .auth-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary-blue);
+        }
+
+        .auth-tab:hover:not(.active) {
+            color: var(--text-primary);
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .auth-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .auth-input-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .auth-input-group input {
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .auth-input-group input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(15, 98, 254, 0.1);
+        }
+
+        .auth-input-group input.error {
+            border-color: #da1e28;
+        }
+
+        .password-requirements {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .password-strength {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .strength-bar {
+            flex: 1;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+
+        .strength-bar.weak {
+            background: #da1e28;
+        }
+
+        .strength-bar.medium {
+            background: #f1c21b;
+        }
+
+        .strength-bar.strong {
+            background: #24a148;
+        }
+
+        .auth-submit-btn {
+            padding: 16px;
+            background: linear-gradient(135deg, #0f62fe 0%, #0353e9 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .auth-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(15, 98, 254, 0.4);
+        }
+
+        .auth-submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .auth-submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .auth-error {
+            background: rgba(218, 30, 40, 0.1);
+            color: #da1e28;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .auth-error.show {
+            display: block;
+        }
+
+        .auth-success {
+            background: rgba(36, 161, 72, 0.1);
+            color: #24a148;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .auth-success.show {
+            display: block;
+        }
+
+        /* Form visibility */
+        #signup-form {
+            display: none;
+        }
+
+        /* Theme Toggle in Corner */
+        .auth-theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .auth-theme-toggle:hover {
+            background: var(--border-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .auth-branding {
+                display: none;
+            }
+
+            .auth-form-container {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-container">
+        <!-- Left Side - Branding -->
+        <div class="auth-branding">
+            <div class="auth-logo">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                </svg>
+                AgentHub
+            </div>
+            <p class="auth-tagline">
+                Build intelligent AI agents with MCP tools and RAG capabilities.
+            </p>
+            <div class="auth-features">
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">🤖</div>
+                    <span>Create custom AI agents in minutes</span>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">🔧</div>
+                    <span>Connect to AWS, APIs, and more via MCP</span>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">📚</div>
+                    <span>Upload documents for RAG knowledge base</span>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">🔒</div>
+                    <span>Secure and private deployment</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Form -->
+        <div class="auth-form-container">
+            <button class="auth-theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+                <svg id="theme-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path
+                        d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z">
+                    </path>
+                </svg>
+            </button>
+
+            <div class="auth-form-header">
+                <h1>Welcome back</h1>
+                <p>Sign in to access your AI agents</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+                <button class="auth-tab" onclick="switchTab('signup')">Create Account</button>
+            </div>
+
+            <div id="auth-error" class="auth-error"></div>
+            <div id="auth-success" class="auth-success"></div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form" onsubmit="handleLogin(event)">
+                <div class="auth-input-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="you@example.com" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="auth-submit-btn">Sign In</button>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="auth-form" onsubmit="handleSignup(event)">
+                <div class="auth-input-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" placeholder="you@example.com" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" placeholder="Create a strong password" required
+                        oninput="checkPasswordStrength(this.value)">
+                    <div class="password-strength" id="password-strength">
+                        <div class="strength-bar" id="str1"></div>
+                        <div class="strength-bar" id="str2"></div>
+                        <div class="strength-bar" id="str3"></div>
+                        <div class="strength-bar" id="str4"></div>
+                    </div>
+                    <p class="password-requirements">
+                        Min 8 characters, uppercase, lowercase, number, special character
+                    </p>
+                </div>
+                <div class="auth-input-group">
+                    <label for="signup-confirm">Confirm Password</label>
+                    <input type="password" id="signup-confirm" placeholder="Confirm your password" required>
+                </div>
+                <button type="submit" class="auth-submit-btn" id="signup-btn">Create Account</button>
+            </form>
+
+            <div class="auth-divider">or continue as guest</div>
+            <button class="auth-submit-btn" style="background: var(--input-bg); color: var(--text-primary);"
+                onclick="window.location.href='index.html'">
+                Continue without account
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        function switchTab(tab) {
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const tabs = document.querySelectorAll('.auth-tab');
+            const header = document.querySelector('.auth-form-header h1');
+            const subtext = document.querySelector('.auth-form-header p');
+
+            // Clear messages
+            hideError();
+            hideSuccess();
+
+            tabs.forEach(t => t.classList.remove('active'));
+
+            if (tab === 'login') {
+                tabs[0].classList.add('active');
+                loginForm.style.display = 'flex';
+                signupForm.style.display = 'none';
+                header.textContent = 'Welcome back';
+                subtext.textContent = 'Sign in to access your AI agents';
+            } else {
+                tabs[1].classList.add('active');
+                loginForm.style.display = 'none';
+                signupForm.style.display = 'flex';
+                header.textContent = 'Create account';
+                subtext.textContent = 'Get started with AgentHub today';
+            }
+        }
+
+        function checkPasswordStrength(password) {
+            const bars = ['str1', 'str2', 'str3', 'str4'];
+            let strength = 0;
+
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+
+            bars.forEach((bar, i) => {
+                const el = document.getElementById(bar);
+                el.classList.remove('weak', 'medium', 'strong');
+                if (i < strength) {
+                    if (strength <= 1) el.classList.add('weak');
+                    else if (strength <= 2) el.classList.add('medium');
+                    else el.classList.add('strong');
+                }
+            });
+
+            return strength >= 4;
+        }
+
+        function validatePassword(password) {
+            const minLength = password.length >= 8;
+            const hasUpper = /[A-Z]/.test(password);
+            const hasLower = /[a-z]/.test(password);
+            const hasNumber = /\d/.test(password);
+            const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+            return minLength && hasUpper && hasLower && hasNumber && hasSpecial;
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('auth-error');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+
+        function hideError() {
+            document.getElementById('auth-error').classList.remove('show');
+        }
+
+        function showSuccess(message) {
+            const successEl = document.getElementById('auth-success');
+            successEl.textContent = message;
+            successEl.classList.add('show');
+        }
+
+        function hideSuccess() {
+            document.getElementById('auth-success').classList.remove('show');
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            hideError();
+
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Login failed');
+                }
+
+                // Store token and redirect
+                localStorage.setItem('auth_token', data.token);
+                localStorage.setItem('user_email', email);
+                window.location.href = 'index.html';
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+            hideError();
+
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirm = document.getElementById('signup-confirm').value;
+
+            // Validate password
+            if (!validatePassword(password)) {
+                showError('Password must have 8+ characters, uppercase, lowercase, number, and special character');
+                return;
+            }
+
+            if (password !== confirm) {
+                showError('Passwords do not match');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Signup failed');
+                }
+
+                showSuccess('Account created successfully! Please sign in.');
+                switchTab('login');
+                document.getElementById('login-email').value = email;
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+    </script>
+</body>
+
+</html>

@@ -1150,3 +1150,257 @@ body {
 .modal-btn-delete:hover {
     background: #b81922;
 }
+
+/* Enhanced Config Panel Styles */
+.config-panel {
+    background: linear-gradient(180deg, var(--bg-color) 0%, var(--surface-color) 100%);
+    padding: 2.5rem;
+    overflow-y: auto;
+}
+
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.editable-name-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.agent-name-input {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    border: none;
+    background: transparent;
+    padding: 0.5rem 0;
+    border-radius: 0;
+    min-width: 200px;
+    max-width: 400px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s;
+}
+
+.agent-name-input:hover {
+    border-bottom-color: var(--border-color);
+}
+
+.agent-name-input:focus {
+    outline: none;
+    border-bottom-color: var(--primary-blue);
+    background: rgba(15, 98, 254, 0.05);
+    padding: 0.5rem;
+    border-radius: 8px 8px 0 0;
+}
+
+/* Enhanced Form Groups */
+.form-group {
+    background: var(--surface-color);
+    padding: 1.75rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.form-group:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border-color: rgba(15, 98, 254, 0.3);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 4px rgba(15, 98, 254, 0.1);
+    background: var(--surface-color);
+}
+
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+/* Enhanced Sidebar Styles */
+.sidebar {
+    background: linear-gradient(180deg, var(--surface-color) 0%, var(--bg-color) 100%);
+    border-right: 1px solid var(--border-color);
+}
+
+.agent-item {
+    padding: 1rem 1.25rem;
+    margin: 0.25rem 0.75rem;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.agent-item:hover {
+    background: var(--input-bg);
+    transform: translateX(4px);
+}
+
+.agent-item.active {
+    background: linear-gradient(135deg, rgba(15, 98, 254, 0.1) 0%, rgba(105, 41, 196, 0.1) 100%);
+    border-left: 3px solid var(--primary-blue);
+    color: var(--primary-blue);
+}
+
+.create-agent-btn {
+    margin: 1rem;
+    padding: 1rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, #6929c4 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.create-agent-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(15, 98, 254, 0.4);
+}
+
+/* Enhanced Chat Panel */
+.chat-panel {
+    background: var(--surface-color);
+    border-left: 1px solid var(--border-color);
+}
+
+.chat-header {
+    background: linear-gradient(180deg, var(--surface-color) 0%, var(--bg-color) 100%);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem 1.5rem;
+}
+
+.chat-history {
+    background: var(--bg-color);
+    padding: 1.5rem;
+}
+
+.message.user {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, #0353e9 100%);
+    color: white;
+    border-radius: 18px 18px 4px 18px;
+    padding: 1rem 1.25rem;
+}
+
+.message.assistant {
+    background: transparent;
+}
+
+/* Enhanced Upload Area */
+.upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 2.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: linear-gradient(135deg, rgba(15, 98, 254, 0.02) 0%, rgba(105, 41, 196, 0.02) 100%);
+}
+
+.upload-area:hover {
+    border-color: var(--primary-blue);
+    background: linear-gradient(135deg, rgba(15, 98, 254, 0.05) 0%, rgba(105, 41, 196, 0.05) 100%);
+    transform: scale(1.01);
+}
+
+.upload-area.dragover {
+    border-color: var(--primary-blue);
+    background: rgba(15, 98, 254, 0.1);
+}
+
+.upload-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Document List Enhancement */
+.document-item {
+    background: var(--bg-color);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+}
+
+.document-item:hover {
+    border-color: var(--primary-blue);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Status Indicators */
+.status-dot {
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(135deg, #24a148 0%, #198038 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(36, 161, 72, 0.5);
+    animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 8px rgba(36, 161, 72, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 0 16px rgba(36, 161, 72, 0.8);
+    }
+}
+
+/* Improved Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}

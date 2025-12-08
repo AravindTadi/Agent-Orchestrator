@@ -18,7 +18,7 @@ from mcp.client.stdio import stdio_client
 # Local Imports
 from backend.rag import vector_store, document_processor
 from backend.config import GROQ_API_KEY, MCP_SERVER_PATH, FRONTEND_DIR
-from backend import database
+from backend import database, auth
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -451,6 +451,64 @@ async def health_check():
 
 
 # --- Global Error Handler ---
+
+# --- Authentication Endpoints ---
+
+class AuthRequest(BaseModel):
+    email: str
+    password: str
+
+
+@app.post("/auth/signup")
+async def signup(request: AuthRequest):
+    """Create a new user account."""
+    try:
+        user = auth.create_user(request.email, request.password)
+        logger.info(f"New user registered: {request.email}")
+        return {"success": True, "user": user}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/auth/login")
+async def login(request: AuthRequest):
+    """Login and get a session token."""
+    user = auth.verify_user(request.email, request.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    token = auth.create_session(user["id"])
+    logger.info(f"User logged in: {request.email}")
+    return {
+        "success": True,
+        "token": token,
+        "user": user
+    }
+
+
+@app.post("/auth/logout")
+async def logout(authorization: str = Header(None)):
+    """Logout and invalidate session."""
+    if authorization:
+        token = authorization.replace("Bearer ", "")
+        auth.delete_session(token)
+    return {"success": True}
+
+
+@app.get("/auth/me")
+async def get_current_user(authorization: str = Header(None)):
+    """Get current logged in user."""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    token = authorization.replace("Bearer ", "")
+    user = auth.verify_session(token)
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Session expired")
+    
+    return {"success": True, "user": user}
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
