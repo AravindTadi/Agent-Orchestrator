@@ -808,6 +808,18 @@ async def get_analytics(days: int = 30, agent_id: Optional[str] = None):
         conversations_change = calc_change(analytics["total_conversations"], prev_period["conversations"])
         messages_change = calc_change(analytics["total_messages"], prev_period["messages"])
         
+        # Calculate documents indexed
+        documents_count = 0
+        if agent_id and agent_id != 'all':
+            docs = vector_store.list_documents(agent_id)
+            documents_count = len(docs)
+        else:
+            # Get all agents to sum up documents
+            all_agents = database.get_all_agents()
+            for agent in all_agents:
+                docs = vector_store.list_documents(agent['id'])
+                documents_count += len(docs)
+
         return {
             "success": True,
             "data": {
@@ -816,7 +828,8 @@ async def get_analytics(days: int = 30, agent_id: Optional[str] = None):
                 "user_messages": analytics["user_messages"],
                 "assistant_messages": analytics["assistant_messages"],
                 "active_agents": analytics["active_agents"],
-                "documents_indexed": analytics["documents_indexed"],
+                "documents_indexed": documents_count,
+                "avg_response_time": analytics["avg_response_time"],
                 "agent_stats": analytics["agent_stats"],
                 "period_days": days,
                 "changes": {

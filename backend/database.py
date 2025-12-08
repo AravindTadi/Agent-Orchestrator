@@ -4,6 +4,7 @@ Uses SQLite for agent configurations.
 """
 import sqlite3
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from contextlib import contextmanager
@@ -487,9 +488,61 @@ def get_analytics(days: int = 30, agent_id: Optional[str] = None) -> Dict[str, A
         cursor.execute("SELECT COUNT(*) as count FROM agents")
         active_agents = cursor.fetchone()['count']
         
-        # Documents count (if we track this in the future)
+        # Documents count (placeholder, updated in main.py)
         documents_indexed = 0
         
+        # Calculate Average Response Time
+        cursor.execute(f"""
+            SELECT m.session_id, m.role, m.created_at, s.agent_id
+            FROM chat_messages m
+            JOIN chat_sessions s ON m.session_id = s.id
+            WHERE m.created_at >= {date_filter}
+            ORDER BY m.session_id, m.created_at
+        """)
+        
+        all_messages = cursor.fetchall()
+        
+        agent_response_times = {} # agent_id -> [times]
+        global_response_times = []
+        
+        for i in range(len(all_messages) - 1):
+            curr = all_messages[i]
+            next_msg = all_messages[i+1]
+            
+            if curr['session_id'] == next_msg['session_id']:
+                if curr['role'] == 'user' and next_msg['role'] == 'assistant':
+                    try:
+                        # Handle potential different datetime formats
+                        t1_str = curr['created_at']
+                        t2_str = next_msg['created_at']
+                        
+                        # Simple ISO format check (replace 'T' with space if needed)
+                        # Handle Z for UTC
+                        t1_str = t1_str.replace('Z', '+00:00')
+                        t2_str = t2_str.replace('Z', '+00:00')
+                        
+                        t1 = datetime.fromisoformat(t1_str)
+                        t2 = datetime.fromisoformat(t2_str)
+                        
+                        diff = (t2 - t1).total_seconds()
+                        
+                        if 0 < diff < 600: # Filter out > 10 mins
+                            global_response_times.append(diff)
+                            agent_id_val = curr['agent_id']
+                            if agent_id_val not in agent_response_times:
+                                agent_response_times[agent_id_val] = []
+                            agent_response_times[agent_id_val].append(diff)
+                    except Exception:
+                        pass
+        
+        avg_response_time = round(sum(global_response_times) / len(global_response_times), 2) if global_response_times else 0
+        
+        # Update agent_stats with avg response time
+        for stat in agent_stats:
+            a_id = stat['agent_id']
+            times = agent_response_times.get(a_id, [])
+            stat['avg_response_time'] = round(sum(times) / len(times), 2) if times else 0
+
         return {
             "total_conversations": total_conversations,
             "total_messages": total_messages,
@@ -497,6 +550,7 @@ def get_analytics(days: int = 30, agent_id: Optional[str] = None) -> Dict[str, A
             "assistant_messages": assistant_messages,
             "active_agents": active_agents,
             "documents_indexed": documents_indexed,
+            "avg_response_time": avg_response_time,
             "agent_stats": agent_stats,
             "period_days": days
         }
