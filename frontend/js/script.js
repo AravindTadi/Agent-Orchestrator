@@ -844,9 +844,87 @@ async function confirmDeleteAgent() {
     }
 }
 
-// Create new agent - redirect to create mode
+// Create new agent - show template picker
 function createNewAgent() {
+    openTemplateModal();
+}
+
+// Template Modal Functions
+async function openTemplateModal() {
+    const modal = document.getElementById('template-modal');
+    if (modal) {
+        modal.classList.add('show');
+        await loadTemplates();
+    }
+}
+
+function closeTemplateModal(event) {
+    if (!event || event.target.id === 'template-modal') {
+        const modal = document.getElementById('template-modal');
+        if (modal) modal.classList.remove('show');
+    }
+}
+
+async function loadTemplates() {
+    try {
+        const response = await fetch(`${API_BASE}/templates`);
+        if (response.ok) {
+            const data = await response.json();
+            renderTemplates(data.templates);
+        }
+    } catch (error) {
+        console.error('Failed to load templates:', error);
+    }
+}
+
+function renderTemplates(templates) {
+    const grid = document.getElementById('template-grid');
+    if (!grid) return;
+
+    // Keep only the first "Blank Agent" card
+    const blankCard = grid.querySelector('.template-card');
+    grid.innerHTML = '';
+    if (blankCard) grid.appendChild(blankCard);
+
+    templates.forEach(template => {
+        const card = document.createElement('div');
+        card.className = 'template-card';
+        card.onclick = () => createFromTemplate(template.id);
+        card.innerHTML = `
+            <div class="template-icon">${template.icon || '🤖'}</div>
+            <div class="template-info">
+                <h4>${template.name}</h4>
+                <p>${template.description}</p>
+            </div>
+            <span class="template-category">${template.category}</span>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function createBlankAgent() {
+    closeTemplateModal();
     window.location.href = 'orchestrator.html?mode=create';
+}
+
+async function createFromTemplate(templateId) {
+    try {
+        const response = await fetch(`${API_BASE}/agents/from-template/${templateId}`, {
+            method: 'POST'
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            closeTemplateModal();
+            showToast(`✅ Created agent: ${data.agent.name}`);
+            window.location.href = `orchestrator.html?agent=${data.agent.id}`;
+        } else {
+            showToast('❌ Failed to create agent');
+        }
+    } catch (error) {
+        console.error('Error creating from template:', error);
+        showToast('❌ Failed to create agent');
+    }
 }
 
 // Profile button - redirect to login/profile page

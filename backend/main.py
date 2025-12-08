@@ -669,6 +669,144 @@ async def get_user_settings(authorization: str = Header(None)):
         
     return {"success": True, "settings": user_settings}
 
+
+# ==================== Chat History Endpoints ====================
+
+class CreateSessionRequest(BaseModel):
+    agent_id: str
+    title: Optional[str] = "New Chat"
+
+class AddMessageRequest(BaseModel):
+    role: str
+    content: str
+    metadata: Optional[Dict[str, Any]] = None
+
+class UpdateTitleRequest(BaseModel):
+    title: str
+
+
+@app.post("/chat/sessions")
+async def create_session(request: CreateSessionRequest, authorization: str = Header(None)):
+    """Create a new chat session."""
+    user_id = None
+    if authorization:
+        token = authorization.replace("Bearer ", "")
+        user = auth.verify_session(token)
+        if user:
+            user_id = user["user_id"]
+    
+    session_id = f"session_{uuid.uuid4().hex[:12]}"
+    session = database.create_chat_session(session_id, request.agent_id, user_id, request.title)
+    return {"success": True, "session": session}
+
+
+@app.get("/chat/sessions")
+async def list_sessions(agent_id: Optional[str] = None, authorization: str = Header(None)):
+    """List chat sessions."""
+    if authorization:
+        token = authorization.replace("Bearer ", "")
+        user = auth.verify_session(token)
+        if user:
+            sessions = database.get_user_sessions(user["user_id"])
+            return {"success": True, "sessions": sessions}
+    
+    if agent_id:
+        sessions = database.get_agent_sessions(agent_id)
+        return {"success": True, "sessions": sessions}
+    
+    return {"success": True, "sessions": []}
+
+
+@app.get("/chat/sessions/{session_id}")
+async def get_session(session_id: str):
+    """Get a chat session with messages."""
+    session = database.get_chat_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    messages = database.get_session_messages(session_id)
+    return {"success": True, "session": session, "messages": messages}
+
+
+@app.post("/chat/sessions/{session_id}/messages")
+async def add_message(session_id: str, request: AddMessageRequest):
+    """Add a message to a session."""
+    session = database.get_chat_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    message = database.add_chat_message(session_id, request.role, request.content, request.metadata)
+    return {"success": True, "message": message}
+
+
+@app.patch("/chat/sessions/{session_id}")
+async def update_session(session_id: str, request: UpdateTitleRequest):
+    """Update session title."""
+    session = database.update_session_title(session_id, request.title)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {"success": True, "session": session}
+
+
+@app.delete("/chat/sessions/{session_id}")
+async def delete_session(session_id: str):
+    """Delete a chat session."""
+    deleted = database.delete_chat_session(session_id)
+    return {"success": deleted}
+
+
+# ==================== Agent Templates Endpoints ====================
+
+@app.get("/templates")
+async def list_templates():
+    """Get all agent templates."""
+    templates = database.get_all_templates()
+    return {"success": True, "templates": templates, "count": len(templates)}
+
+
+@app.get("/templates/{template_id}")
+async def get_template(template_id: str):
+    """Get a specific template."""
+    template = database.get_template(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    return {"success": True, "template": template}
+
+
+@app.post("/agents/from-template/{template_id}")
+async def create_agent_from_template(template_id: str):
+    """Create a new agent from a template."""
+    template = database.get_template(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    agent_id = f"agent_{uuid.uuid4().hex[:8]}"
+    agent = database.create_agent(
+        agent_id=agent_id,
+        name=template["name"],
+        description=template["description"],
+        system_prompt=template["system_prompt"]
+    )
+    
+    monitoring.monitor.log_event("INFO", f"Agent created from template: {template['name']}")
+    return {"success": True, "agent": agent}
+
+
+# ==================== Multi-Model Support ====================
+
+AVAILABLE_MODELS = [
+    {"id": "llama-3.3-70b-versatile", "name": "Llama 3.3 70B", "provider": "Groq", "context": 128000},
+    {"id": "llama-3.1-8b-instant", "name": "Llama 3.1 8B", "provider": "Groq", "context": 128000},
+    {"id": "mixtral-8x7b-32768", "name": "Mixtral 8x7B", "provider": "Groq", "context": 32768},
+    {"id": "gemma2-9b-it", "name": "Gemma 2 9B", "provider": "Groq", "context": 8192},
+]
+
+@app.get("/models")
+async def list_models():
+    """Get available AI models."""
+    return {"success": True, "models": AVAILABLE_MODELS}
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Catch all unhandled exceptions."""
@@ -689,3 +827,4 @@ async def global_exception_handler(request: Request, exc: Exception):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

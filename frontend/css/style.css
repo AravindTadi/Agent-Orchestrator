@@ -1831,3 +1831,159 @@ body {
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(15, 98, 254, 0.4);
 }
+
+/* ==================== Template Picker ====================*/
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.template-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.template-card:hover {
+    border-color: var(--primary-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.template-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+}
+
+.template-info h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 6px 0;
+}
+
+.template-info p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.template-category {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--primary-blue);
+    color: white;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    margin-top: 8px;
+}
+
+/* ==================== Model Selector ====================*/
+.model-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-top: 12px;
+}
+
+.model-selector label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.model-selector select {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.model-selector select:focus {
+    outline: none;
+}
+
+/* ==================== Chat History Sidebar ====================*/
+.chat-history-section {
+    border-top: 1px solid var(--border-color);
+    margin-top: 16px;
+    padding-top: 16px;
+}
+
+.chat-history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.chat-history-header h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.chat-session-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 4px;
+}
+
+.chat-session-item:hover {
+    background: var(--input-bg);
+}
+
+.chat-session-item.active {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.chat-session-title {
+    flex: 1;
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-session-time {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+.new-chat-btn {
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.new-chat-btn:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+}

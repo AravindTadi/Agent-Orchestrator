@@ -433,6 +433,37 @@
                 </div>
             </div>
 
+            <!-- Template Picker Modal -->
+            <div class="modal-overlay" id="template-modal" onclick="closeTemplateModal(event)">
+                <div class="modal-content" style="max-width: 700px;" onclick="event.stopPropagation()">
+                    <div class="modal-header">
+                        <h3>🚀 Create New Agent</h3>
+                        <button class="modal-close" onclick="closeTemplateModal()">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <path
+                                    d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                            Start from scratch or choose a template to get started quickly.
+                        </p>
+                        <div class="template-grid" id="template-grid">
+                            <!-- Blank Agent Card -->
+                            <div class="template-card" onclick="createBlankAgent()">
+                                <div class="template-icon">✨</div>
+                                <div class="template-info">
+                                    <h4>Blank Agent</h4>
+                                    <p>Start from scratch with a clean slate</p>
+                                </div>
+                            </div>
+                            <!-- Templates will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <script src="js/script.js"></script>
         </div> <!-- End main-content -->
     </div> <!-- End app-container -->
