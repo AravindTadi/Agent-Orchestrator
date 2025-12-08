@@ -11,8 +11,14 @@ function toggleSidebar() {
     document.getElementById('sidebar-overlay').classList.toggle('show');
 }
 
-// Initialize - Load agents from API
+// Initialize - Load agents from API (only for pages that need the agent list)
 document.addEventListener('DOMContentLoaded', async () => {
+    // Skip this initialization for analytics page - it has its own init
+    if (window.location.pathname.includes('analytics.html')) {
+        console.log('Skipping script.js initialization for analytics page');
+        return;
+    }
+
     await loadAgentsFromAPI();
 
     // Check URL params
@@ -103,6 +109,10 @@ function initCreateMode() {
 
 function renderAgentList() {
     const list = document.getElementById('agent-list');
+
+    // Skip if this page doesn't have an agent list (e.g. analytics.html)
+    if (!list) return;
+
     list.innerHTML = '';
 
     // Add "Back to Dashboard" link

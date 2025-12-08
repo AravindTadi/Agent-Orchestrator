@@ -690,21 +690,27 @@
         </main>
     </div>
 
-    <script src="js/script.js"></script>
+    <script src="js/script.js?v=5"></script>
     <script>
         const API_BASE = 'http://localhost:8000';
         let analyticsAgents = [];
         let analyticsData = null;
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async () => {
+        // Initialize analytics
+        async function initAnalytics() {
+            console.log('Analytics page init starting...');
             applyTheme();
+            console.log('Theme applied');
             await loadAgentsForAnalytics();
+            console.log('Agents loaded, now loading analytics...');
             await loadAnalytics();
+            console.log('Analytics loaded');
 
             // Add event listener for date filter
             document.getElementById('date-filter').addEventListener('change', loadAnalytics);
-        });
+        }
+
+        // (Init call moved to end of script)
 
         // Apply theme from localStorage (global)
         function applyTheme() {
@@ -760,12 +766,17 @@
                     url += `&agent_id=${agentId}`;
                 }
 
+                console.log('Fetching analytics from:', url);
                 const response = await fetch(url);
+                console.log('Analytics response status:', response.status);
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch analytics');
                 }
 
                 const result = await response.json();
+                console.log('Analytics data:', result);
+
                 if (result.success) {
                     analyticsData = result.data;
                     updateStats();
@@ -947,6 +958,10 @@
         function openProfile() {
             window.location.href = 'login.html';
         }
+
+        // Run init - DOM is already loaded at this point since script is at end of body
+        console.log('About to call initAnalytics...');
+        initAnalytics().then(() => console.log('initAnalytics completed')).catch(e => console.error('initAnalytics error:', e));
     </script>
 </body>
 
