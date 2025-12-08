@@ -64,21 +64,37 @@ function initCreateMode() {
     currentAgentId = null; // No ID yet
 
     // Clear Config Panel
-    document.getElementById('agent-name-header').value = ""; // Updated ID
-    document.getElementById('agent-desc').value = "";
-    document.getElementById('agent-prompt').value = "";
+    const nameHeader = document.getElementById('agent-name-header');
+    const descInput = document.getElementById('agent-desc');
+    const promptInput = document.getElementById('agent-prompt');
+    const deleteBtn = document.getElementById('delete-agent-btn');
+
+    if (nameHeader) nameHeader.value = "";
+    if (descInput) descInput.value = "";
+    if (promptInput) promptInput.value = "";
+    if (deleteBtn) deleteBtn.style.display = 'none'; // Hide delete for new agents
 
     // Reset Chat to Empty
-    document.getElementById('chat-header-name').innerText = "New Agent";
-    document.getElementById('chat-history').innerHTML = `
-        <div class="empty-state">
-            Configure your new agent and click Save to create it.
-        </div>
-    `;
+    const chatHistory = document.getElementById('chat-history');
+    if (chatHistory) {
+        chatHistory.innerHTML = `
+            <div class="empty-state">
+                Configure your new agent and click Save to create it.
+            </div>
+        `;
+    }
 
     // Disable Chat Input until saved
-    document.getElementById('user-input').disabled = true;
-    document.getElementById('send-btn').disabled = true;
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    if (userInput) userInput.disabled = true;
+    if (sendBtn) sendBtn.disabled = true;
+
+    // Clear document list
+    const docList = document.getElementById('document-list');
+    if (docList) docList.innerHTML = '<p class="hint" style="text-align:center;">Save the agent first to add documents.</p>';
+
+    renderAgentList();
 }
 
 function renderAgentList() {
@@ -133,10 +149,17 @@ function selectAgent(id) {
     }
 
     const descInput = document.getElementById('agent-desc');
-    if (descInput) descInput.value = agent.description;
+    if (descInput) descInput.value = agent.description || '';
 
     const promptInput = document.getElementById('agent-prompt');
-    if (promptInput) promptInput.value = agent.system_prompt;
+    if (promptInput) promptInput.value = agent.system_prompt || '';
+
+    // Show delete button (but disable for default agent)
+    const deleteBtn = document.getElementById('delete-agent-btn');
+    if (deleteBtn) {
+        deleteBtn.style.display = 'flex';
+        deleteBtn.disabled = (id === 'agent_default');
+    }
 
     // Reset Chat
     chatHistory = [];
@@ -721,3 +744,78 @@ function showToast(message) {
     setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
 }
 
+// Delete current agent
+async function deleteCurrentAgent() {
+    if (!currentAgentId) {
+        showToast('No agent selected');
+        return;
+    }
+
+    if (currentAgentId === 'agent_default') {
+        showToast('❌ Cannot delete the default agent');
+        return;
+    }
+
+    const agent = agents[currentAgentId];
+    if (!confirm(`Are you sure you want to delete "${agent?.name || currentAgentId}"?\n\nThis will also delete all documents in its knowledge base.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/agents/${currentAgentId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to delete agent');
+        }
+
+        // Remove from local state
+        delete agents[currentAgentId];
+        localStorage.setItem('mcp_agents', JSON.stringify(agents));
+
+        showToast('🗑️ Agent deleted');
+
+        // Redirect to first available agent or dashboard
+        const remainingIds = Object.keys(agents);
+        if (remainingIds.length > 0) {
+            selectAgent(remainingIds[0]);
+        } else {
+            window.location.href = 'index.html';
+        }
+
+    } catch (error) {
+        console.error('Delete agent error:', error);
+        showToast(`❌ ${error.message}`);
+    }
+}
+
+// Create new agent - redirect to create mode
+function createNewAgent() {
+    window.location.href = 'orchestrator.html?mode=create';
+}
+
+// Profile button placeholder (for future use)
+function openProfile() {
+    showToast('🔜 Profile feature coming soon!');
+}
+
+// Toggle theme helper for index.html
+function toggleTheme() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+
+    // Update icon if exists
+    const icon = document.getElementById('theme-icon');
+    if (icon) {
+        if (newTheme === 'dark') {
+            icon.innerHTML = '<path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.79 1.41-1.41-1.79-1.79-1.41 1.41zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"></path>';
+        } else {
+            icon.innerHTML = '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"></path>';
+        }
+    }
+}

@@ -966,3 +966,65 @@ body {
     margin-bottom: 5px;
     color: var(--text-secondary);
 }
+
+/* Navbar Right Section */
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+/* Profile Button */
+.profile-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.profile-btn:hover {
+    background-color: var(--shadow-color);
+    transform: scale(1.1);
+}
+
+/* Delete Agent Button */
+.delete-agent-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid #da1e28;
+    color: #da1e28;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.delete-agent-btn:hover {
+    background: #da1e28;
+    color: white;
+}
+
+.delete-agent-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Config Header Layout */
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
