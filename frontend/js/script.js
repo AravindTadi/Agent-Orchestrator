@@ -372,6 +372,11 @@ function resetChat() {
     // Clear history array
     chatHistory = [];
 
+    // Reset session for analytics (will create new session on next message)
+    if (typeof currentSessionId !== 'undefined') {
+        currentSessionId = null;
+    }
+
     // Reset UI
     const agent = agents[currentAgentId];
     document.getElementById('chat-history').innerHTML = `
@@ -388,6 +393,30 @@ function resetChat() {
 
 function handleKeyPress(event) {
     if (event.key === 'Enter') sendMessage();
+}
+
+// Current chat session ID for analytics tracking
+let currentSessionId = null;
+
+// Create a new chat session
+async function createChatSession(agentId) {
+    try {
+        const response = await fetch('http://localhost:8000/chat/sessions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                agent_id: agentId,
+                title: 'New Chat'
+            })
+        });
+        if (response.ok) {
+            const data = await response.json();
+            return data.session?.id || null;
+        }
+    } catch (error) {
+        console.error('Failed to create chat session:', error);
+    }
+    return null;
 }
 
 async function sendMessage() {
@@ -408,6 +437,11 @@ async function sendMessage() {
     sendBtn.disabled = true;
 
     try {
+        // Create session if doesn't exist (for analytics tracking)
+        if (!currentSessionId) {
+            currentSessionId = await createChatSession(currentAgentId);
+        }
+
         // Send to Backend
         // Note: We send the CURRENT config, so dynamic changes work immediately
         const response = await fetch('http://localhost:8000/chat', {
@@ -418,7 +452,8 @@ async function sendMessage() {
                 system_prompt: agents[currentAgentId].system_prompt, // Send dynamic prompt
                 model: model, // Send selected model
                 message: message,
-                history: chatHistory // This now includes the latest user message added by addMessage
+                history: chatHistory, // This now includes the latest user message added by addMessage
+                session_id: currentSessionId // Track for analytics
             })
         });
 

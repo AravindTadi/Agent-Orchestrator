@@ -147,6 +147,7 @@ class ChatRequest(BaseModel):
     message: str
     history: List[Message]
     use_rag: bool = True  # Enable RAG by default
+    session_id: Optional[str] = None  # Optional session ID for analytics tracking
 
 class UrlUploadRequest(BaseModel):
     agent_id: str
@@ -262,19 +263,39 @@ Use the following information to help answer the user's question. If the informa
                 messages=messages
             )
             monitoring.monitor.log_event("INFO", f"Agent {request.agent_id} completed chat with tool use", metadata={"agent_id": request.agent_id, "model": request.model, "input_tokens": completion.usage.prompt_tokens + second_completion.usage.prompt_tokens, "output_tokens": completion.usage.completion_tokens + second_completion.usage.completion_tokens})
+            
+            assistant_response = second_completion.choices[0].message.content
+            
+            # Save messages to database for analytics
+            session_id = request.session_id
+            if session_id:
+                database.add_chat_message(session_id, "user", request.message)
+                database.add_chat_message(session_id, "assistant", assistant_response)
+            
             return {
-                "response": second_completion.choices[0].message.content,
+                "response": assistant_response,
                 "reasoning": "\n".join(reasoning_parts) if reasoning_parts else None,
-                "sources": sources if sources else None
+                "sources": sources if sources else None,
+                "session_id": session_id
             }
             
         else:
             # No tool used, just return text
             monitoring.monitor.log_event("INFO", f"Agent {request.agent_id} completed chat without tool use", metadata={"agent_id": request.agent_id, "model": request.model, "input_tokens": completion.usage.prompt_tokens, "output_tokens": completion.usage.completion_tokens})
+            
+            assistant_response = response_message.content
+            
+            # Save messages to database for analytics
+            session_id = request.session_id
+            if session_id:
+                database.add_chat_message(session_id, "user", request.message)
+                database.add_chat_message(session_id, "assistant", assistant_response)
+            
             return {
-                "response": response_message.content,
+                "response": assistant_response,
                 "reasoning": None,
-                "sources": sources if sources else None
+                "sources": sources if sources else None,
+                "session_id": session_id
             }
 
     except Exception as e:
@@ -753,6 +774,60 @@ async def delete_session(session_id: str):
     """Delete a chat session."""
     deleted = database.delete_chat_session(session_id)
     return {"success": deleted}
+
+
+# ==================== Analytics Endpoints ====================
+
+@app.get("/analytics")
+async def get_analytics(days: int = 30, agent_id: Optional[str] = None):
+    """
+    Get analytics data with time-based filtering.
+    
+    Parameters:
+    - days: Number of days to look back (7, 30, 90)
+    - agent_id: Optional agent ID to filter by (use 'all' or omit for all agents)
+    """
+    try:
+        # Get current period analytics
+        analytics = database.get_analytics(days=days, agent_id=agent_id)
+        
+        # Get previous period for comparison
+        prev_period = database.get_previous_period_analytics(days=days, agent_id=agent_id)
+        
+        # Calculate percentage changes
+        def calc_change(current: int, previous: int) -> dict:
+            if previous == 0:
+                percentage = 100 if current > 0 else 0
+            else:
+                percentage = round(((current - previous) / previous) * 100, 1)
+            return {
+                "value": percentage,
+                "direction": "positive" if percentage > 0 else ("negative" if percentage < 0 else "neutral")
+            }
+        
+        conversations_change = calc_change(analytics["total_conversations"], prev_period["conversations"])
+        messages_change = calc_change(analytics["total_messages"], prev_period["messages"])
+        
+        return {
+            "success": True,
+            "data": {
+                "total_conversations": analytics["total_conversations"],
+                "total_messages": analytics["total_messages"],
+                "user_messages": analytics["user_messages"],
+                "assistant_messages": analytics["assistant_messages"],
+                "active_agents": analytics["active_agents"],
+                "documents_indexed": analytics["documents_indexed"],
+                "agent_stats": analytics["agent_stats"],
+                "period_days": days,
+                "changes": {
+                    "conversations": conversations_change,
+                    "messages": messages_change
+                }
+            }
+        }
+    except Exception as e:
+        logger.error(f"Analytics error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ==================== Agent Templates Endpoints ====================

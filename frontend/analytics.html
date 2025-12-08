@@ -694,18 +694,16 @@
     <script>
         const API_BASE = 'http://localhost:8000';
         let analyticsAgents = [];
-        let analyticsData = {
-            conversations: 0,
-            messages: 0,
-            documents: 0,
-            agentStats: []
-        };
+        let analyticsData = null;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             applyTheme();
             await loadAgentsForAnalytics();
             await loadAnalytics();
+
+            // Add event listener for date filter
+            document.getElementById('date-filter').addEventListener('change', loadAnalytics);
         });
 
         // Apply theme from localStorage (global)
@@ -739,43 +737,93 @@
             });
         }
 
-        // Load analytics data
+        // Get days from filter
+        function getDaysFromFilter() {
+            const filter = document.getElementById('date-filter').value;
+            switch (filter) {
+                case '7d': return 7;
+                case '30d': return 30;
+                case '90d': return 90;
+                default: return 30;
+            }
+        }
+
+        // Load analytics data from real API
         async function loadAnalytics() {
             try {
-                // Get sessions
-                const sessionsRes = await fetch(`${API_BASE}/chat/sessions`);
-                const sessionsData = sessionsRes.ok ? await sessionsRes.json() : { sessions: [] };
+                const days = getDaysFromFilter();
+                const agentId = document.getElementById('agent-filter').value;
 
-                // Calculate stats
-                analyticsData.conversations = sessionsData.sessions?.length || 0;
-                analyticsData.messages = analyticsData.conversations * 8;
-                analyticsData.documents = 0;
+                // Build query params
+                let url = `${API_BASE}/analytics?days=${days}`;
+                if (agentId && agentId !== 'all') {
+                    url += `&agent_id=${agentId}`;
+                }
 
-                // Build agent stats from actual agents
-                analyticsData.agentStats = analyticsAgents.map(agent => ({
-                    id: agent.id,
-                    name: agent.name,
-                    conversations: Math.floor(Math.random() * 50) + 5,
-                    messages: Math.floor(Math.random() * 200) + 20,
-                    avgResponse: (Math.random() * 2 + 0.5).toFixed(1) + 's',
-                    active: true
-                }));
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch analytics');
+                }
 
-                // Update UI
+                const result = await response.json();
+                if (result.success) {
+                    analyticsData = result.data;
+                    updateStats();
+                    updateCharts();
+                    updateTable();
+                }
+            } catch (error) {
+                console.error('Failed to load analytics:', error);
+                // Show empty state
+                analyticsData = {
+                    total_conversations: 0,
+                    total_messages: 0,
+                    user_messages: 0,
+                    assistant_messages: 0,
+                    active_agents: 0,
+                    documents_indexed: 0,
+                    agent_stats: [],
+                    changes: {
+                        conversations: { value: 0, direction: 'neutral' },
+                        messages: { value: 0, direction: 'neutral' }
+                    }
+                };
                 updateStats();
                 updateCharts();
                 updateTable();
-            } catch (error) {
-                console.error('Failed to load analytics:', error);
             }
         }
 
         // Update stat cards
         function updateStats() {
-            document.getElementById('stat-conversations').textContent = analyticsData.conversations.toLocaleString();
-            document.getElementById('stat-messages').textContent = analyticsData.messages.toLocaleString();
-            document.getElementById('stat-agents').textContent = analyticsAgents.length;
-            document.getElementById('stat-documents').textContent = analyticsData.documents;
+            document.getElementById('stat-conversations').textContent = analyticsData.total_conversations.toLocaleString();
+            document.getElementById('stat-messages').textContent = analyticsData.total_messages.toLocaleString();
+            document.getElementById('stat-agents').textContent = analyticsData.active_agents;
+            document.getElementById('stat-documents').textContent = analyticsData.documents_indexed;
+
+            // Update change indicators
+            updateChangeIndicator('stat-conversations-change', analyticsData.changes?.conversations);
+            updateChangeIndicator('stat-messages-change', analyticsData.changes?.messages);
+        }
+
+        // Update change indicator
+        function updateChangeIndicator(elementId, change) {
+            const element = document.getElementById(elementId);
+            if (!element || !change) return;
+
+            const value = change.value || 0;
+            const direction = change.direction || 'neutral';
+
+            element.className = `stat-change ${direction}`;
+
+            const icon = direction === 'positive'
+                ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 14l5-5 5 5z"></path></svg>'
+                : direction === 'negative'
+                    ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 10l5 5 5-5z"></path></svg>'
+                    : '';
+
+            const prefix = value > 0 ? '+' : '';
+            element.innerHTML = `${icon}<span>${prefix}${value}% from last period</span>`;
         }
 
         // Update charts
@@ -784,33 +832,34 @@
             const barChart = document.getElementById('agent-usage-chart');
             barChart.innerHTML = '';
 
-            const maxMessages = Math.max(...analyticsData.agentStats.map(a => a.messages), 1);
+            const agentStats = analyticsData.agent_stats || [];
+            const maxMessages = Math.max(...agentStats.map(a => a.messages), 1);
             const colors = ['blue', 'purple', 'green'];
 
-            analyticsData.agentStats.slice(0, 5).forEach((agent, index) => {
-                const percentage = (agent.messages / maxMessages) * 100;
-                const row = document.createElement('div');
-                row.className = 'bar-row';
-                row.innerHTML = `
-                    <span class="bar-label">${agent.name}</span>
-                    <div class="bar-container">
-                        <div class="bar-fill ${colors[index % 3]}" style="width: ${percentage}%;">
-                            <span class="bar-value">${agent.messages}</span>
+            if (agentStats.length === 0) {
+                barChart.innerHTML = '<div class="empty-state"><p class="empty-state-text">No agent data available yet. Start chatting to see usage statistics.</p></div>';
+            } else {
+                agentStats.slice(0, 5).forEach((agent, index) => {
+                    const percentage = (agent.messages / maxMessages) * 100;
+                    const row = document.createElement('div');
+                    row.className = 'bar-row';
+                    row.innerHTML = `
+                        <span class="bar-label">${agent.agent_name || 'Unknown'}</span>
+                        <div class="bar-container">
+                            <div class="bar-fill ${colors[index % 3]}" style="width: ${Math.max(percentage, 5)}%;">
+                                <span class="bar-value">${agent.messages}</span>
+                            </div>
                         </div>
-                    </div>
-                `;
-                barChart.appendChild(row);
-            });
-
-            if (analyticsData.agentStats.length === 0) {
-                barChart.innerHTML = '<div class="empty-state"><p class="empty-state-text">No agent data available</p></div>';
+                    `;
+                    barChart.appendChild(row);
+                });
             }
 
             // Doughnut chart
-            const userMessages = Math.floor(analyticsData.messages * 0.5);
-            const assistantMessages = analyticsData.messages - userMessages;
+            const userMessages = analyticsData.user_messages || 0;
+            const assistantMessages = analyticsData.assistant_messages || 0;
             const total = userMessages + assistantMessages;
-            const userPercent = total ? (userMessages / total) * 100 : 50;
+            const userPercent = total > 0 ? (userMessages / total) * 100 : 50;
 
             const doughnut = document.getElementById('message-type-chart');
             doughnut.style.background = `conic-gradient(var(--primary-blue) 0% ${userPercent}%, #6929c4 ${userPercent}% 100%)`;
@@ -825,36 +874,63 @@
             const tbody = document.getElementById('agent-table-body');
             tbody.innerHTML = '';
 
-            if (analyticsData.agentStats.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5">
-                            <div class="empty-state">
-                                <p class="empty-state-title">No agents found</p>
-                                <p class="empty-state-text">Create an agent to see analytics</p>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+            const agentStats = analyticsData.agent_stats || [];
+
+            if (agentStats.length === 0) {
+                // Show all agents from the dropdown even if no stats
+                if (analyticsAgents.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <p class="empty-state-title">No agents found</p>
+                                    <p class="empty-state-text">Create an agent to see analytics</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    analyticsAgents.forEach(agent => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>
+                                <div class="agent-name-cell">
+                                    <div class="agent-avatar">${agent.name.charAt(0).toUpperCase()}</div>
+                                    <span>${agent.name}</span>
+                                </div>
+                            </td>
+                            <td>0</td>
+                            <td>0</td>
+                            <td>--</td>
+                            <td>
+                                <span class="status-badge active">
+                                    <span class="status-dot"></span>
+                                    Active
+                                </span>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
                 return;
             }
 
-            analyticsData.agentStats.forEach(agent => {
+            agentStats.forEach(agent => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>
                         <div class="agent-name-cell">
-                            <div class="agent-avatar">${agent.name.charAt(0).toUpperCase()}</div>
-                            <span>${agent.name}</span>
+                            <div class="agent-avatar">${(agent.agent_name || 'U').charAt(0).toUpperCase()}</div>
+                            <span>${agent.agent_name || 'Unknown'}</span>
                         </div>
                     </td>
                     <td>${agent.conversations}</td>
                     <td>${agent.messages}</td>
-                    <td>${agent.avgResponse}</td>
+                    <td>--</td>
                     <td>
-                        <span class="status-badge ${agent.active ? 'active' : 'inactive'}">
+                        <span class="status-badge active">
                             <span class="status-dot"></span>
-                            ${agent.active ? 'Active' : 'Inactive'}
+                            Active
                         </span>
                     </td>
                 `;
@@ -864,7 +940,6 @@
 
         // Filter by agent
         function filterByAgent() {
-            const selectedAgent = document.getElementById('agent-filter').value;
             loadAnalytics();
         }
 

@@ -399,6 +399,149 @@ def get_template(template_id: str) -> Optional[Dict]:
         return None
 
 
+# ==================== Analytics Functions ====================
+
+def get_analytics(days: int = 30, agent_id: Optional[str] = None) -> Dict[str, Any]:
+    """Get analytics data with time-based filtering."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        
+        # Build date filter
+        date_filter = f"datetime('now', '-{days} days')"
+        
+        # Base conditions
+        session_conditions = f"created_at >= {date_filter}"
+        message_conditions = f"created_at >= {date_filter}"
+        
+        if agent_id and agent_id != 'all':
+            session_conditions += f" AND agent_id = '{agent_id}'"
+        
+        # Total conversations
+        cursor.execute(f"""
+            SELECT COUNT(*) as count FROM chat_sessions 
+            WHERE {session_conditions}
+        """)
+        total_conversations = cursor.fetchone()['count']
+        
+        # Total messages
+        if agent_id and agent_id != 'all':
+            cursor.execute(f"""
+                SELECT COUNT(*) as count FROM chat_messages m
+                JOIN chat_sessions s ON m.session_id = s.id
+                WHERE m.created_at >= {date_filter} AND s.agent_id = ?
+            """, (agent_id,))
+        else:
+            cursor.execute(f"""
+                SELECT COUNT(*) as count FROM chat_messages 
+                WHERE {message_conditions}
+            """)
+        total_messages = cursor.fetchone()['count']
+        
+        # User vs Assistant messages
+        if agent_id and agent_id != 'all':
+            cursor.execute(f"""
+                SELECT 
+                    SUM(CASE WHEN m.role = 'user' THEN 1 ELSE 0 END) as user_count,
+                    SUM(CASE WHEN m.role = 'assistant' THEN 1 ELSE 0 END) as assistant_count
+                FROM chat_messages m
+                JOIN chat_sessions s ON m.session_id = s.id
+                WHERE m.created_at >= {date_filter} AND s.agent_id = ?
+            """, (agent_id,))
+        else:
+            cursor.execute(f"""
+                SELECT 
+                    SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) as user_count,
+                    SUM(CASE WHEN role = 'assistant' THEN 1 ELSE 0 END) as assistant_count
+                FROM chat_messages
+                WHERE {message_conditions}
+            """)
+        msg_breakdown = cursor.fetchone()
+        user_messages = msg_breakdown['user_count'] or 0
+        assistant_messages = msg_breakdown['assistant_count'] or 0
+        
+        # Per-agent breakdown
+        cursor.execute(f"""
+            SELECT 
+                s.agent_id,
+                a.name as agent_name,
+                COUNT(DISTINCT s.id) as conversations,
+                COUNT(m.id) as messages
+            FROM chat_sessions s
+            LEFT JOIN chat_messages m ON s.id = m.session_id
+            LEFT JOIN agents a ON s.agent_id = a.id
+            WHERE s.created_at >= {date_filter}
+            GROUP BY s.agent_id
+            ORDER BY messages DESC
+        """)
+        
+        agent_stats = []
+        for row in cursor.fetchall():
+            agent_stats.append({
+                "agent_id": row['agent_id'],
+                "agent_name": row['agent_name'] or 'Unknown Agent',
+                "conversations": row['conversations'],
+                "messages": row['messages']
+            })
+        
+        # Active agents count
+        cursor.execute("SELECT COUNT(*) as count FROM agents")
+        active_agents = cursor.fetchone()['count']
+        
+        # Documents count (if we track this in the future)
+        documents_indexed = 0
+        
+        return {
+            "total_conversations": total_conversations,
+            "total_messages": total_messages,
+            "user_messages": user_messages,
+            "assistant_messages": assistant_messages,
+            "active_agents": active_agents,
+            "documents_indexed": documents_indexed,
+            "agent_stats": agent_stats,
+            "period_days": days
+        }
+
+
+def get_previous_period_analytics(days: int = 30, agent_id: Optional[str] = None) -> Dict[str, int]:
+    """Get analytics for the previous period (for comparison)."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        
+        # Previous period: from 2*days ago to days ago
+        start_date = f"datetime('now', '-{days*2} days')"
+        end_date = f"datetime('now', '-{days} days')"
+        
+        session_conditions = f"created_at >= {start_date} AND created_at < {end_date}"
+        
+        if agent_id and agent_id != 'all':
+            session_conditions += f" AND agent_id = '{agent_id}'"
+        
+        cursor.execute(f"""
+            SELECT COUNT(*) as count FROM chat_sessions 
+            WHERE {session_conditions}
+        """)
+        prev_conversations = cursor.fetchone()['count']
+        
+        if agent_id and agent_id != 'all':
+            cursor.execute(f"""
+                SELECT COUNT(*) as count FROM chat_messages m
+                JOIN chat_sessions s ON m.session_id = s.id
+                WHERE m.created_at >= {start_date} AND m.created_at < {end_date}
+                AND s.agent_id = ?
+            """, (agent_id,))
+        else:
+            cursor.execute(f"""
+                SELECT COUNT(*) as count FROM chat_messages 
+                WHERE created_at >= {start_date} AND created_at < {end_date}
+            """)
+        prev_messages = cursor.fetchone()['count']
+        
+        return {
+            "conversations": prev_conversations,
+            "messages": prev_messages
+        }
+
+
 if __name__ == "__main__":
     # Test the database
     init_db()
