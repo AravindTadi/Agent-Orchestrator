@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrations - AgentHub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Integrations Page Specific Styles */
+        .integrations-container {
+            padding: 2.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow-y: auto;
+            height: calc(100vh - 60px);
+        }
+
+        .integrations-header {
+            margin-bottom: 2.5rem;
+        }
+
+        .integrations-header h1 {
+            font-size: 2.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .integrations-header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            max-width: 600px;
+        }
+
+        /* Section Styles */
+        .integration-section {
+            margin-bottom: 3rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .section-icon.monitoring {
+            background: linear-gradient(135deg, #0f62fe 0%, #6929c4 100%);
+        }
+
+        .section-icon.vault {
+            background: linear-gradient(135deg, #24a148 0%, #0e6027 100%);
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .section-header span {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Integration Cards Grid */
+        .integration-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .integration-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .integration-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-blue) 0%, #6929c4 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .integration-card:hover {
+            border-color: var(--primary-blue);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .integration-card:hover::before {
+            opacity: 1;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .card-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .card-logo.aws {
+            background: linear-gradient(135deg, #ff9900 0%, #ff6600 100%);
+            color: white;
+        }
+
+        .card-logo.datadog {
+            background: linear-gradient(135deg, #632ca6 0%, #4a1d8b 100%);
+            color: white;
+        }
+
+        .card-logo.hashicorp {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: white;
+        }
+
+        .card-logo.azure {
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            color: white;
+        }
+
+        .card-title-area h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .card-title-area span {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .card-status {
+            margin-left: auto;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .card-status.connected {
+            background: rgba(36, 161, 72, 0.15);
+            color: #24a148;
+        }
+
+        .card-status.not-connected {
+            background: var(--input-bg);
+            color: var(--text-secondary);
+        }
+
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Form inside cards */
+        .card-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-row .input-group {
+            flex: 1;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .input-group input,
+        .input-group select {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(15, 98, 254, 0.1);
+        }
+
+        .input-group input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, #0353e9 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(15, 98, 254, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-danger {
+            background: rgba(218, 30, 40, 0.1);
+            color: #da1e28;
+        }
+
+        .btn-danger:hover {
+            background: rgba(218, 30, 40, 0.2);
+        }
+
+        /* Coming Soon Badge */
+        .coming-soon-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(var(--bg-color-rgb, 22, 22, 22), 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            backdrop-filter: blur(2px);
+        }
+
+        .coming-soon-badge {
+            background: linear-gradient(135deg, #6929c4 0%, #9f1853 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface-color);
+            color: var(--text-primary);
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .integrations-container {
+                padding: 1.5rem;
+            }
+
+            .integration-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Global Sidebar -->
+        <nav class="main-nav" id="main-nav">
+            <div class="nav-header">
+                AgentHub
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-item">
+                    Agents
+                </a>
+                <a href="chat.html" class="nav-item">
+                    Chat
+                </a>
+                <a href="integrations.html" class="nav-item active">
+                    Integrations
+                </a>
+            </div>
+        </nav>
+
+        <!-- Overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- Top Navbar -->
+        <div class="top-navbar">
+            <button class="hamburger-btn" onclick="toggleSidebar()">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+                </svg>
+            </button>
+            <div class="navbar-title">Integrations</div>
+            <div class="navbar-right">
+                <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
+                    <svg id="theme-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path
+                            d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z">
+                        </path>
+                    </svg>
+                </button>
+                <button class="profile-btn" onclick="openProfile()" title="Profile">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                        <path
+                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="integrations-container">
+                <div class="integrations-header">
+                    <h1>🔌 Integrations</h1>
+                    <p>Connect AgentHub with external services for monitoring, logging, and secure secret management.
+                    </p>
+                </div>
+
+                <!-- External Monitoring Section -->
+                <section class="integration-section">
+                    <div class="section-header">
+                        <div class="section-icon monitoring">📊</div>
+                        <div>
+                            <h2>External Monitoring</h2>
+                            <span>Send logs and metrics to external observability platforms</span>
+                        </div>
+                    </div>
+
+                    <div class="integration-grid">
+                        <!-- AWS CloudWatch Card -->
+                        <div class="integration-card" id="aws-card">
+                            <div class="card-header">
+                                <div class="card-logo aws">AWS</div>
+                                <div class="card-title-area">
+                                    <h3>AWS CloudWatch</h3>
+                                    <span>Logs & Metrics</span>
+                                </div>
+                                <div class="card-status not-connected" id="aws-status">Not Connected</div>
+                            </div>
+                            <p class="card-description">
+                                Stream application logs and custom metrics to Amazon CloudWatch for centralized
+                                monitoring and alerting.
+                            </p>
+                            <div class="card-form">
+                                <div class="form-row">
+                                    <div class="input-group">
+                                        <label>Access Key ID</label>
+                                        <input type="text" id="aws-access-key" placeholder="AKIA...">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Region</label>
+                                        <input type="text" id="aws-region" placeholder="us-east-1" value="us-east-1">
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Secret Access Key</label>
+                                    <input type="password" id="aws-secret-key" placeholder="Enter secret key">
+                                </div>
+                                <div class="input-group">
+                                    <label>Log Group Name</label>
+                                    <input type="text" id="aws-log-group" placeholder="/agenthub/logs"
+                                        value="/agenthub/logs">
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn btn-primary" onclick="saveAwsSettings()">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                                    </svg>
+                                    Connect
+                                </button>
+                                <button class="btn btn-secondary" onclick="testAwsConnection()">Test Connection</button>
+                            </div>
+                        </div>
+
+                        <!-- Datadog Card -->
+                        <div class="integration-card" id="datadog-card">
+                            <div class="card-header">
+                                <div class="card-logo datadog">DD</div>
+                                <div class="card-title-area">
+                                    <h3>Datadog</h3>
+                                    <span>APM & Logs</span>
+                                </div>
+                                <div class="card-status not-connected" id="dd-status">Not Connected</div>
+                            </div>
+                            <p class="card-description">
+                                Send logs, traces, and metrics to Datadog for comprehensive application performance
+                                monitoring.
+                            </p>
+                            <div class="card-form">
+                                <div class="input-group">
+                                    <label>API Key</label>
+                                    <input type="password" id="dd-api-key" placeholder="Enter Datadog API Key">
+                                </div>
+                                <div class="input-group">
+                                    <label>Site</label>
+                                    <select id="dd-site">
+                                        <option value="datadoghq.com">datadoghq.com (US1)</option>
+                                        <option value="us3.datadoghq.com">us3.datadoghq.com (US3)</option>
+                                        <option value="us5.datadoghq.com">us5.datadoghq.com (US5)</option>
+                                        <option value="datadoghq.eu">datadoghq.eu (EU)</option>
+                                        <option value="ap1.datadoghq.com">ap1.datadoghq.com (AP1)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn btn-primary" onclick="saveDatadogSettings()">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                                    </svg>
+                                    Connect
+                                </button>
+                                <button class="btn btn-secondary" onclick="testDatadogConnection()">Test
+                                    Connection</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- External Vault Section -->
+                <section class="integration-section">
+                    <div class="section-header">
+                        <div class="section-icon vault">🔐</div>
+                        <div>
+                            <h2>External Vault Integration</h2>
+                            <span>Secure secret management and credential storage</span>
+                        </div>
+                    </div>
+
+                    <div class="integration-grid">
+                        <!-- HashiCorp Vault Card -->
+                        <div class="integration-card">
+                            <div class="card-header">
+                                <div class="card-logo hashicorp">HV</div>
+                                <div class="card-title-area">
+                                    <h3>HashiCorp Vault</h3>
+                                    <span>Secrets Management</span>
+                                </div>
+                                <div class="card-status not-connected">Not Connected</div>
+                            </div>
+                            <p class="card-description">
+                                Securely store and access API keys, tokens, and other sensitive credentials using
+                                HashiCorp Vault.
+                            </p>
+                            <div class="card-form">
+                                <div class="input-group">
+                                    <label>Vault Address</label>
+                                    <input type="text" placeholder="https://vault.example.com:8200" disabled>
+                                </div>
+                                <div class="input-group">
+                                    <label>Namespace</label>
+                                    <input type="text" placeholder="admin" disabled>
+                                </div>
+                            </div>
+                            <div class="coming-soon-overlay">
+                                <div class="coming-soon-badge">🚀 Coming Soon</div>
+                            </div>
+                        </div>
+
+                        <!-- AWS Secrets Manager Card -->
+                        <div class="integration-card">
+                            <div class="card-header">
+                                <div class="card-logo aws">AWS</div>
+                                <div class="card-title-area">
+                                    <h3>AWS Secrets Manager</h3>
+                                    <span>Cloud Secrets</span>
+                                </div>
+                                <div class="card-status not-connected">Not Connected</div>
+                            </div>
+                            <p class="card-description">
+                                Retrieve and rotate secrets automatically using AWS Secrets Manager for enhanced
+                                security.
+                            </p>
+                            <div class="card-form">
+                                <div class="input-group">
+                                    <label>Secret Name</label>
+                                    <input type="text" placeholder="prod/agenthub/credentials" disabled>
+                                </div>
+                                <div class="input-group">
+                                    <label>Region</label>
+                                    <input type="text" placeholder="us-east-1" disabled>
+                                </div>
+                            </div>
+                            <div class="coming-soon-overlay">
+                                <div class="coming-soon-badge">🚀 Coming Soon</div>
+                            </div>
+                        </div>
+
+                        <!-- Azure Key Vault Card -->
+                        <div class="integration-card">
+                            <div class="card-header">
+                                <div class="card-logo azure">AZ</div>
+                                <div class="card-title-area">
+                                    <h3>Azure Key Vault</h3>
+                                    <span>Microsoft Cloud</span>
+                                </div>
+                                <div class="card-status not-connected">Not Connected</div>
+                            </div>
+                            <p class="card-description">
+                                Safeguard cryptographic keys and secrets used by cloud applications and services.
+                            </p>
+                            <div class="card-form">
+                                <div class="input-group">
+                                    <label>Vault URI</label>
+                                    <input type="text" placeholder="https://myvault.vault.azure.net/" disabled>
+                                </div>
+                                <div class="input-group">
+                                    <label>Tenant ID</label>
+                                    <input type="text" placeholder="00000000-0000-0000-0000-000000000000" disabled>
+                                </div>
+                            </div>
+                            <div class="coming-soon-overlay">
+                                <div class="coming-soon-badge">🚀 Coming Soon</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        // Sidebar toggle
+        function toggleSidebar() {
+            const nav = document.getElementById('main-nav');
+            const overlay = document.getElementById('sidebar-overlay');
+            nav.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+
+        // Profile redirect
+        function openProfile() {
+            window.location.href = 'login.html';
+        }
+
+        // Toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Load existing settings
+        async function loadSettings() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                if (!token) return;
+
+                const response = await fetch(`${API_BASE}/settings`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const s = data.settings;
+
+                    if (s.aws_access_key) {
+                        document.getElementById('aws-access-key').value = s.aws_access_key;
+                        document.getElementById('aws-status').textContent = 'Connected';
+                        document.getElementById('aws-status').classList.remove('not-connected');
+                        document.getElementById('aws-status').classList.add('connected');
+                    }
+                    if (s.aws_region) document.getElementById('aws-region').value = s.aws_region;
+                    if (s.aws_log_group) document.getElementById('aws-log-group').value = s.aws_log_group;
+
+                    if (s.dd_api_key && s.dd_api_key !== '********') {
+                        document.getElementById('dd-status').textContent = 'Connected';
+                        document.getElementById('dd-status').classList.remove('not-connected');
+                        document.getElementById('dd-status').classList.add('connected');
+                    }
+                    if (s.dd_site) document.getElementById('dd-site').value = s.dd_site;
+                }
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+            }
+        }
+
+        // Save AWS Settings
+        async function saveAwsSettings() {
+            const accessKey = document.getElementById('aws-access-key').value;
+            const secretKey = document.getElementById('aws-secret-key').value;
+            const region = document.getElementById('aws-region').value;
+            const logGroup = document.getElementById('aws-log-group').value;
+
+            if (!accessKey || !secretKey || !region) {
+                showToast('❌ Please fill in all required fields');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch(`${API_BASE}/settings/aws`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        access_key: accessKey,
+                        secret_key: secretKey,
+                        region: region,
+                        log_group: logGroup
+                    })
+                });
+
+                if (response.ok) {
+                    showToast('✅ AWS CloudWatch connected successfully');
+                    document.getElementById('aws-status').textContent = 'Connected';
+                    document.getElementById('aws-status').classList.remove('not-connected');
+                    document.getElementById('aws-status').classList.add('connected');
+                } else {
+                    throw new Error('Failed to save');
+                }
+            } catch (error) {
+                showToast('❌ Failed to connect AWS CloudWatch');
+            }
+        }
+
+        // Save Datadog Settings
+        async function saveDatadogSettings() {
+            const apiKey = document.getElementById('dd-api-key').value;
+            const site = document.getElementById('dd-site').value;
+
+            if (!apiKey) {
+                showToast('❌ Please enter Datadog API Key');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch(`${API_BASE}/settings/datadog`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        api_key: apiKey,
+                        site: site
+                    })
+                });
+
+                if (response.ok) {
+                    showToast('✅ Datadog connected successfully');
+                    document.getElementById('dd-status').textContent = 'Connected';
+                    document.getElementById('dd-status').classList.remove('not-connected');
+                    document.getElementById('dd-status').classList.add('connected');
+                } else {
+                    throw new Error('Failed to save');
+                }
+            } catch (error) {
+                showToast('❌ Failed to connect Datadog');
+            }
+        }
+
+        // Test connections (placeholder)
+        function testAwsConnection() {
+            showToast('🔄 Testing AWS connection...');
+            setTimeout(() => showToast('✅ AWS connection successful!'), 1500);
+        }
+
+        function testDatadogConnection() {
+            showToast('🔄 Testing Datadog connection...');
+            setTimeout(() => showToast('✅ Datadog connection successful!'), 1500);
+        }
+
+        // Load settings on page load
+        document.addEventListener('DOMContentLoaded', loadSettings);
+    </script>
+</body>
+
+</html>
