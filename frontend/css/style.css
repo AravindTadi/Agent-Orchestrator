@@ -1493,33 +1493,42 @@ body {
     color: var(--text-primary);
 }
 
-/* Monitoring Button in Sidebar */
-.monitoring-btn {
-    margin: 0.5rem 1rem 1rem 1rem;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
+/* Monitoring Button in Navbar */
+.monitoring-btn-nav {
     background: transparent;
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
-    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
-    gap: 10px;
-    width: calc(100% - 2rem);
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
 }
 
-.monitoring-btn:hover {
+.monitoring-btn-nav:hover {
     background: var(--input-bg);
     color: var(--text-primary);
     border-color: var(--primary-blue);
 }
 
-.monitoring-btn svg {
+.monitoring-btn-nav svg {
     opacity: 0.7;
 }
 
-.monitoring-btn:hover svg {
+.monitoring-btn-nav:hover svg {
     opacity: 1;
+}
+
+.monitoring-btn-nav span {
+    display: inline;
+}
+
+@media (max-width: 600px) {
+    .monitoring-btn-nav span {
+        display: none;
+    }
 }
