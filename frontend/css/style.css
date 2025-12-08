@@ -1532,3 +1532,302 @@ body {
         display: none;
     }
 }
+
+/* ==================== Profile Dropdown ==================== */
+.profile-dropdown {
+    position: relative;
+}
+
+.profile-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 280px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.profile-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.profile-menu-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, #6929c4 100%);
+}
+
+.profile-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.profile-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: white;
+}
+
+.profile-email {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.profile-menu-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 4px 0;
+}
+
+.profile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.15s;
+    cursor: pointer;
+}
+
+.profile-menu-item:hover {
+    background: var(--input-bg);
+}
+
+.profile-menu-item svg {
+    color: var(--text-secondary);
+    transition: color 0.15s;
+}
+
+.profile-menu-item:hover svg {
+    color: var(--primary-blue);
+}
+
+.profile-menu-item.logout {
+    color: #da1e28;
+}
+
+.profile-menu-item.logout:hover {
+    background: rgba(218, 30, 40, 0.1);
+}
+
+.profile-menu-item.logout svg {
+    color: #da1e28;
+}
+
+.menu-badge {
+    margin-left: auto;
+    padding: 3px 8px;
+    background: var(--input-bg);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Region Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: var(--surface-color);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+
+.modal-close:hover {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.region-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.region-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--input-bg);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.region-option:hover {
+    border-color: var(--primary-blue);
+}
+
+.region-option.active {
+    border-color: var(--primary-blue);
+    background: rgba(15, 98, 254, 0.1);
+}
+
+.region-option .region-flag {
+    font-size: 1.5rem;
+}
+
+.region-option .region-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.region-option .region-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.region-option .region-code {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.region-option .region-check {
+    margin-left: auto;
+    color: var(--primary-blue);
+    opacity: 0;
+}
+
+.region-option.active .region-check {
+    opacity: 1;
+}
+
+/* API Keys Modal */
+.api-key-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--input-bg);
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.api-key-item input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.api-key-item input:focus {
+    outline: none;
+}
+
+.api-key-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.api-key-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+
+.api-key-btn:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
+.generate-key-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, #0353e9 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.generate-key-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(15, 98, 254, 0.4);
+}

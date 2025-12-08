@@ -1001,3 +1001,182 @@ function toggleTheme() {
         }
     }
 }
+
+// ==================== Profile Dropdown ====================
+
+// Toggle profile menu
+function toggleProfileMenu() {
+    const menu = document.getElementById('profile-menu');
+    menu.classList.toggle('show');
+
+    // Load user info
+    loadUserInfo();
+}
+
+// Close profile menu when clicking outside
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('profile-dropdown');
+    const menu = document.getElementById('profile-menu');
+    if (dropdown && menu && !dropdown.contains(e.target)) {
+        menu.classList.remove('show');
+    }
+});
+
+// Load user info from auth
+async function loadUserInfo() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        document.getElementById('profile-name').textContent = 'Guest User';
+        document.getElementById('profile-email').textContent = 'Not logged in';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('profile-name').textContent = data.email.split('@')[0];
+            document.getElementById('profile-email').textContent = data.email;
+        }
+    } catch (error) {
+        console.error('Failed to load user info:', error);
+    }
+}
+
+// Open Settings page (Integrations)
+function openSettingsPage() {
+    window.location.href = 'integrations.html';
+}
+
+// Open Region Selector Modal
+function openRegionSelector() {
+    document.getElementById('profile-menu').classList.remove('show');
+    document.getElementById('region-modal').classList.add('show');
+
+    // Load saved region
+    const savedRegion = localStorage.getItem('selected_region') || 'us-east-1';
+    updateRegionSelection(savedRegion);
+}
+
+function closeRegionModal(event) {
+    if (!event || event.target.id === 'region-modal') {
+        document.getElementById('region-modal').classList.remove('show');
+    }
+}
+
+function selectRegion(regionCode, regionName) {
+    localStorage.setItem('selected_region', regionCode);
+    localStorage.setItem('selected_region_name', regionName);
+
+    // Update badge
+    const badge = document.getElementById('current-region');
+    if (badge) {
+        badge.textContent = regionCode.split('-').slice(0, 2).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('-');
+    }
+
+    updateRegionSelection(regionCode);
+    showToast(`✅ Region set to ${regionName}`);
+
+    setTimeout(() => closeRegionModal(), 500);
+}
+
+function updateRegionSelection(selectedCode) {
+    const options = document.querySelectorAll('.region-option');
+    options.forEach(opt => {
+        const code = opt.querySelector('.region-code').textContent;
+        if (code === selectedCode) {
+            opt.classList.add('active');
+        } else {
+            opt.classList.remove('active');
+        }
+    });
+}
+
+// Open API Keys Modal
+function openApiKeys() {
+    document.getElementById('profile-menu').classList.remove('show');
+    document.getElementById('apikeys-modal').classList.add('show');
+    loadApiKey();
+}
+
+function closeApiKeysModal(event) {
+    if (!event || event.target.id === 'apikeys-modal') {
+        document.getElementById('apikeys-modal').classList.remove('show');
+    }
+}
+
+function loadApiKey() {
+    let apiKey = localStorage.getItem('agenthub_api_key');
+    if (!apiKey) {
+        apiKey = generateApiKeyString();
+        localStorage.setItem('agenthub_api_key', apiKey);
+    }
+    document.getElementById('api-key-display').value = apiKey;
+}
+
+function generateApiKeyString() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let key = 'ah_';
+    for (let i = 0; i < 32; i++) {
+        key += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return key;
+}
+
+function copyApiKey() {
+    const input = document.getElementById('api-key-display');
+    input.select();
+    document.execCommand('copy');
+    showToast('📋 API Key copied to clipboard');
+}
+
+function regenerateApiKey() {
+    if (confirm('Are you sure? The old key will stop working.')) {
+        const newKey = generateApiKeyString();
+        localStorage.setItem('agenthub_api_key', newKey);
+        document.getElementById('api-key-display').value = newKey;
+        showToast('🔄 API Key regenerated');
+    }
+}
+
+function generateNewApiKey() {
+    regenerateApiKey();
+}
+
+// Handle Logout
+async function handleLogout() {
+    const token = localStorage.getItem('auth_token');
+
+    try {
+        if (token) {
+            await fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+
+    // Clear local storage
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_email');
+
+    showToast('👋 Logged out successfully');
+
+    setTimeout(() => {
+        window.location.href = 'login.html';
+    }, 1000);
+}
+
+// Load region badge on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const savedRegion = localStorage.getItem('selected_region') || 'us-east-1';
+    const badge = document.getElementById('current-region');
+    if (badge) {
+        badge.textContent = savedRegion.split('-').slice(0, 2).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('-');
+    }
+});
+
