@@ -568,7 +568,7 @@ class DatadogSettings(BaseModel):
 
 @app.post("/settings/aws")
 async def save_aws_config(config: AWSSettings, authorization: str = Header(None)):
-    """Save AWS CloudWatch configuration."""
+    """Save AWS CloudWatch configuration after validating."""
     if not authorization:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
@@ -576,7 +576,16 @@ async def save_aws_config(config: AWSSettings, authorization: str = Header(None)
     user = auth.verify_session(token)
     if not user:
         raise HTTPException(status_code=401, detail="Session expired")
-        
+    
+    # Test connection first
+    success, message = monitoring.monitor.test_aws_connection(
+        config.access_key, config.secret_key, config.region
+    )
+    
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
+    
+    # Save only if valid
     settings.save_aws_settings(
         user["user_id"], 
         config.access_key, 
@@ -594,11 +603,11 @@ async def save_aws_config(config: AWSSettings, authorization: str = Header(None)
     )
     
     monitoring.monitor.log_event("INFO", "AWS CloudWatch integration configured", user["email"])
-    return {"success": True}
+    return {"success": True, "message": message}
 
 @app.post("/settings/datadog")
 async def save_datadog_config(config: DatadogSettings, authorization: str = Header(None)):
-    """Save Datadog configuration."""
+    """Save Datadog configuration after validating."""
     if not authorization:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
@@ -606,14 +615,38 @@ async def save_datadog_config(config: DatadogSettings, authorization: str = Head
     user = auth.verify_session(token)
     if not user:
         raise HTTPException(status_code=401, detail="Session expired")
-        
+    
+    # Test connection first
+    success, message = monitoring.monitor.test_datadog_connection(config.api_key, config.site)
+    
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
+    
+    # Save only if valid
     settings.save_datadog_settings(user["user_id"], config.api_key, config.site)
     
     # Configure monitor immediately
     monitoring.monitor.configure_datadog(config.api_key, config.site)
     
     monitoring.monitor.log_event("INFO", "Datadog integration configured", user["email"])
-    return {"success": True}
+    return {"success": True, "message": message}
+
+
+@app.post("/settings/aws/test")
+async def test_aws_connection(config: AWSSettings):
+    """Test AWS CloudWatch connection without saving."""
+    success, message = monitoring.monitor.test_aws_connection(
+        config.access_key, config.secret_key, config.region
+    )
+    return {"success": success, "message": message}
+
+
+@app.post("/settings/datadog/test")
+async def test_datadog_connection(config: DatadogSettings):
+    """Test Datadog connection without saving."""
+    success, message = monitoring.monitor.test_datadog_connection(config.api_key, config.site)
+    return {"success": success, "message": message}
+
 
 @app.get("/settings")
 async def get_user_settings(authorization: str = Header(None)):

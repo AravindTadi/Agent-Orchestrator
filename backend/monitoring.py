@@ -63,6 +63,56 @@ class MonitoringService:
         self._enabled = True
         logger.info("✅ Datadog logging configured")
 
+    def test_aws_connection(self, access_key: str, secret_key: str, region: str) -> tuple:
+        """Test AWS CloudWatch connection. Returns (success, message)."""
+        try:
+            client = boto3.client(
+                'logs',
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+                region_name=region
+            )
+            # Try to describe log groups - this validates credentials
+            client.describe_log_groups(limit=1)
+            return True, "AWS CloudWatch connection successful"
+        except client.exceptions.ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            if error_code == 'InvalidClientTokenId':
+                return False, "Invalid Access Key ID"
+            elif error_code == 'SignatureDoesNotMatch':
+                return False, "Invalid Secret Access Key"
+            elif error_code == 'AccessDenied':
+                return False, "Access denied - check IAM permissions"
+            else:
+                return False, f"AWS Error: {error_code}"
+        except Exception as e:
+            return False, f"Connection failed: {str(e)}"
+
+    def test_datadog_connection(self, api_key: str, site: str = "datadoghq.com") -> tuple:
+        """Test Datadog connection. Returns (success, message)."""
+        try:
+            # Validate API key using Datadog's validate endpoint
+            url = f"https://api.{site}/api/v1/validate"
+            headers = {
+                "DD-API-KEY": api_key,
+                "Content-Type": "application/json"
+            }
+            
+            response = requests.get(url, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                return True, "Datadog connection successful"
+            elif response.status_code == 403:
+                return False, "Invalid API Key"
+            else:
+                return False, f"Datadog error: HTTP {response.status_code}"
+        except requests.exceptions.Timeout:
+            return False, "Connection timeout - check network"
+        except requests.exceptions.ConnectionError:
+            return False, f"Cannot connect to {site}"
+        except Exception as e:
+            return False, f"Connection failed: {str(e)}"
+
     def log_event(self, level: str, message: str, user_email: str = None, metadata: Dict[str, Any] = None):
         """Send log event to configured services."""
         if not self._enabled:

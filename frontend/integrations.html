@@ -704,6 +704,8 @@
                 return;
             }
 
+            showToast('🔄 Validating AWS credentials...');
+
             try {
                 const token = localStorage.getItem('auth_token');
                 const response = await fetch(`${API_BASE}/settings/aws`, {
@@ -720,16 +722,19 @@
                     })
                 });
 
+                const data = await response.json();
+
                 if (response.ok) {
-                    showToast('✅ AWS CloudWatch connected successfully');
+                    showToast('✅ ' + (data.message || 'AWS CloudWatch connected successfully'));
                     document.getElementById('aws-status').textContent = 'Connected';
                     document.getElementById('aws-status').classList.remove('not-connected');
                     document.getElementById('aws-status').classList.add('connected');
                 } else {
-                    throw new Error('Failed to save');
+                    showToast('❌ ' + (data.detail || 'Connection failed'));
                 }
             } catch (error) {
-                showToast('❌ Failed to connect AWS CloudWatch');
+                showToast('❌ Network error - check console');
+                console.error(error);
             }
         }
 
@@ -742,6 +747,8 @@
                 showToast('❌ Please enter Datadog API Key');
                 return;
             }
+
+            showToast('🔄 Validating Datadog API key...');
 
             try {
                 const token = localStorage.getItem('auth_token');
@@ -757,28 +764,93 @@
                     })
                 });
 
+                const data = await response.json();
+
                 if (response.ok) {
-                    showToast('✅ Datadog connected successfully');
+                    showToast('✅ ' + (data.message || 'Datadog connected successfully'));
                     document.getElementById('dd-status').textContent = 'Connected';
                     document.getElementById('dd-status').classList.remove('not-connected');
                     document.getElementById('dd-status').classList.add('connected');
                 } else {
-                    throw new Error('Failed to save');
+                    showToast('❌ ' + (data.detail || 'Connection failed'));
                 }
             } catch (error) {
-                showToast('❌ Failed to connect Datadog');
+                showToast('❌ Network error - check console');
+                console.error(error);
             }
         }
 
-        // Test connections (placeholder)
-        function testAwsConnection() {
+        // Test AWS Connection (without saving)
+        async function testAwsConnection() {
+            const accessKey = document.getElementById('aws-access-key').value;
+            const secretKey = document.getElementById('aws-secret-key').value;
+            const region = document.getElementById('aws-region').value;
+
+            if (!accessKey || !secretKey || !region) {
+                showToast('❌ Please fill in Access Key, Secret Key, and Region');
+                return;
+            }
+
             showToast('🔄 Testing AWS connection...');
-            setTimeout(() => showToast('✅ AWS connection successful!'), 1500);
+
+            try {
+                const response = await fetch(`${API_BASE}/settings/aws/test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        access_key: accessKey,
+                        secret_key: secretKey,
+                        region: region,
+                        log_group: '/test'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ ' + data.message);
+                } else {
+                    showToast('❌ ' + data.message);
+                }
+            } catch (error) {
+                showToast('❌ Test failed - network error');
+                console.error(error);
+            }
         }
 
-        function testDatadogConnection() {
+        // Test Datadog Connection (without saving)
+        async function testDatadogConnection() {
+            const apiKey = document.getElementById('dd-api-key').value;
+            const site = document.getElementById('dd-site').value;
+
+            if (!apiKey) {
+                showToast('❌ Please enter Datadog API Key');
+                return;
+            }
+
             showToast('🔄 Testing Datadog connection...');
-            setTimeout(() => showToast('✅ Datadog connection successful!'), 1500);
+
+            try {
+                const response = await fetch(`${API_BASE}/settings/datadog/test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        api_key: apiKey,
+                        site: site
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ ' + data.message);
+                } else {
+                    showToast('❌ ' + data.message);
+                }
+            } catch (error) {
+                showToast('❌ Test failed - network error');
+                console.error(error);
+            }
         }
 
         // Load settings on page load
