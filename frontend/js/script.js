@@ -767,7 +767,19 @@ function showToast(message) {
 }
 
 // Delete current agent
-async function deleteCurrentAgent() {
+// Flag to prevent multiple delete dialogs
+let isDeleting = false;
+
+async function deleteCurrentAgent(event) {
+    // Prevent event bubbling
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    // Prevent multiple dialogs
+    if (isDeleting) return;
+
     if (!currentAgentId) {
         showToast('No agent selected');
         return;
@@ -778,8 +790,13 @@ async function deleteCurrentAgent() {
         return;
     }
 
+    isDeleting = true;
+
     const agent = agents[currentAgentId];
-    if (!confirm(`Are you sure you want to delete "${agent?.name || currentAgentId}"?\n\nThis will also delete all documents in its knowledge base.`)) {
+    const confirmDelete = confirm(`Are you sure you want to delete "${agent?.name || currentAgentId}"?\n\nThis will also delete all documents in its knowledge base.`);
+
+    if (!confirmDelete) {
+        isDeleting = false;
         return;
     }
 
@@ -810,6 +827,8 @@ async function deleteCurrentAgent() {
     } catch (error) {
         console.error('Delete agent error:', error);
         showToast(`❌ ${error.message}`);
+    } finally {
+        isDeleting = false;
     }
 }
 
