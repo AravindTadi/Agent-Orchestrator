@@ -766,19 +766,13 @@ function showToast(message) {
     setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
 }
 
-// Delete current agent
-// Flag to prevent multiple delete dialogs
-let isDeleting = false;
-
-async function deleteCurrentAgent(event) {
+// Delete current agent - show modal
+function deleteCurrentAgent(event) {
     // Prevent event bubbling
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
-
-    // Prevent multiple dialogs
-    if (isDeleting) return;
 
     if (!currentAgentId) {
         showToast('No agent selected');
@@ -790,15 +784,30 @@ async function deleteCurrentAgent(event) {
         return;
     }
 
-    isDeleting = true;
-
+    // Show custom modal
     const agent = agents[currentAgentId];
-    const confirmDelete = confirm(`Are you sure you want to delete "${agent?.name || currentAgentId}"?\n\nThis will also delete all documents in its knowledge base.`);
+    const modal = document.getElementById('delete-modal');
+    const message = document.getElementById('delete-modal-message');
 
-    if (!confirmDelete) {
-        isDeleting = false;
-        return;
+    if (modal && message) {
+        message.textContent = `Are you sure you want to delete "${agent?.name || currentAgentId}"?`;
+        modal.style.display = 'flex';
     }
+}
+
+// Close delete modal
+function closeDeleteModal() {
+    const modal = document.getElementById('delete-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Confirm delete from modal
+async function confirmDeleteAgent() {
+    closeDeleteModal();
+
+    if (!currentAgentId) return;
 
     try {
         const response = await fetch(`${API_BASE}/agents/${currentAgentId}`, {
@@ -827,8 +836,6 @@ async function deleteCurrentAgent(event) {
     } catch (error) {
         console.error('Delete agent error:', error);
         showToast(`❌ ${error.message}`);
-    } finally {
-        isDeleting = false;
     }
 }
 

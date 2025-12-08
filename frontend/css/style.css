@@ -1058,3 +1058,95 @@ body {
 .save-agent-btn:active {
     transform: translateY(0);
 }
+
+/* Delete Confirmation Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-dialog {
+    background: var(--surface-color);
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-dialog h3 {
+    margin: 0 0 16px 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+}
+
+.modal-dialog p {
+    margin: 0 0 12px 0;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.modal-warning {
+    color: #da1e28 !important;
+    font-weight: 500;
+    background: rgba(218, 30, 40, 0.1);
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px !important;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.modal-btn-cancel {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+.modal-btn-cancel:hover {
+    background: var(--border-color);
+}
+
+.modal-btn-delete {
+    background: #da1e28;
+    color: white;
+}
+
+.modal-btn-delete:hover {
+    background: #b81922;
+}
