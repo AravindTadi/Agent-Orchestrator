@@ -1492,3 +1492,34 @@ body {
     background: var(--input-bg);
     color: var(--text-primary);
 }
+
+/* Monitoring Button in Sidebar */
+.monitoring-btn {
+    margin: 0.5rem 1rem 1rem 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: calc(100% - 2rem);
+}
+
+.monitoring-btn:hover {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--primary-blue);
+}
+
+.monitoring-btn svg {
+    opacity: 0.7;
+}
+
+.monitoring-btn:hover svg {
+    opacity: 1;
+}
