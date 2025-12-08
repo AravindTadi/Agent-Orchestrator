@@ -417,16 +417,24 @@ async def update_agent(agent_id: str, agent: AgentUpdate):
 
 @app.delete("/agents/{agent_id}")
 async def delete_agent(agent_id: str):
-    """Delete an agent."""
+    """Delete an agent and all its knowledge base documents."""
     if agent_id == "agent_default":
         raise HTTPException(status_code=400, detail="Cannot delete default agent")
     
+    # First, delete all knowledge base documents for this agent
+    try:
+        deleted_chunks = vector_store.delete_all_agent_documents(agent_id)
+        logger.info(f"Deleted {deleted_chunks} knowledge base chunks for agent: {agent_id}")
+    except Exception as e:
+        logger.warning(f"Error deleting knowledge base for agent {agent_id}: {e}")
+    
+    # Then delete the agent from database
     success = database.delete_agent(agent_id)
     if not success:
         raise HTTPException(status_code=404, detail="Agent not found")
     
     logger.info(f"Deleted agent: {agent_id}")
-    return {"success": True, "agent_id": agent_id}
+    return {"success": True, "agent_id": agent_id, "deleted_chunks": deleted_chunks if 'deleted_chunks' in dir() else 0}
 
 
 # --- Health Check ---

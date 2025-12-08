@@ -183,6 +183,26 @@ def delete_document(agent_id: str, document_id: str) -> int:
     return result.get("delete_count", 0) if isinstance(result, dict) else 0
 
 
+def delete_all_agent_documents(agent_id: str) -> int:
+    """
+    Delete ALL documents/chunks for an agent.
+    Used when deleting an agent.
+    
+    Returns:
+        Number of chunks deleted (approximate)
+    """
+    client = get_client()
+    
+    # Delete all chunks for this agent
+    result = client.delete(
+        collection_name=COLLECTION_NAME,
+        filter=f'agent_id == "{agent_id}"'
+    )
+    
+    print(f"🗑️ Deleted ALL chunks for agent {agent_id}")
+    return result.get("delete_count", 0) if isinstance(result, dict) else 0
+
+
 def list_documents(agent_id: str) -> List[Dict[str, Any]]:
     """
     List all documents for an agent.
