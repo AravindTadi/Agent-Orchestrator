@@ -50,7 +50,7 @@ async function loadAgentsFromAPI() {
         });
 
         renderAgentList();
-        console.log(`✅ Loaded ${data.count} agents from API`);
+        console.log(`Loaded ${data.count} agents from API`);
     } catch (error) {
         console.error('Error loading agents from API:', error);
         // Fallback to localStorage if API fails
@@ -82,7 +82,7 @@ function initCreateMode() {
     if (promptInput) promptInput.value = "";
     if (deleteBtn) deleteBtn.style.display = 'none'; // Hide delete for new agents
     if (formActions) formActions.style.display = 'block'; // Show save button area
-    if (saveBtn) saveBtn.textContent = '💾 Create Agent'; // Change button text
+    if (saveBtn) saveBtn.textContent = 'Create Agent'; // Change button text
 
     // Reset Chat to Empty
     const chatHistory = document.getElementById('chat-history');
@@ -118,7 +118,7 @@ function renderAgentList() {
     // Add "Back to Dashboard" link
     const backLink = document.createElement('div');
     backLink.className = 'back-link';
-    backLink.innerHTML = '<span>←</span> Back to Dashboard';
+    backLink.innerHTML = '<span>&larr;</span> Back to Dashboard';
     backLink.onclick = () => window.location.href = 'index.html';
     list.appendChild(backLink);
 
@@ -333,14 +333,14 @@ async function saveAgentConfig(silent = false) {
 
         // Show Toast
         const toast = document.getElementById("toast");
-        toast.innerText = "Configuration Saved ✓";
+        toast.innerText = "Configuration Saved";
         toast.className = "toast show";
         setTimeout(function () { toast.className = toast.className.replace("show", ""); }, 2000);
 
     } catch (error) {
         console.error('Save error:', error);
         if (!silent) {
-            showToast('❌ Failed to save: ' + error.message);
+            showToast('Failed to save: ' + error.message);
         }
     }
 }
@@ -370,10 +370,19 @@ function updateThemeIcon(theme) {
 }
 
 // Initialize Theme (global across all pages)
-const savedTheme = localStorage.getItem('theme') || 'dark';
+const savedTheme = localStorage.getItem('theme') || 'light';
 document.documentElement.setAttribute('data-theme', savedTheme);
+
 document.addEventListener('DOMContentLoaded', () => {
-    updateThemeIcon(savedTheme);
+    const themeCheckbox = document.getElementById('theme-checkbox');
+    if (themeCheckbox) {
+        themeCheckbox.checked = savedTheme === 'dark';
+        themeCheckbox.addEventListener('change', () => {
+            const newTheme = themeCheckbox.checked ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+    }
 });
 
 function resetChat() {
@@ -512,7 +521,7 @@ function addMessage(role, text, reasoning = null, sources = null) {
             }).join('');
             sourcesHtml = `
                 <div class="sources-section">
-                    <span class="sources-label">📚 Sources:</span>
+                    <span class="sources-label">Sources:</span>
                     ${pills}
                 </div>
             `;
@@ -593,7 +602,7 @@ function renderDocumentList(documents) {
 
     list.innerHTML = documents.map(doc => {
         const meta = doc.metadata || {};
-        const icon = getDocIcon(meta.type);
+        const icon = getIconForType(meta.type);
         const name = meta.filename || meta.title || meta.url || doc.document_id;
         const info = meta.chunks ? `${meta.chunks} chunks` : '';
 
@@ -614,16 +623,15 @@ function renderDocumentList(documents) {
     }).join('');
 }
 
-function getDocIcon(type) {
-    const icons = {
-        'txt': '📄',
-        'pdf': '📕',
-        'docx': '📘',
-        'doc': '📘',
-        'csv': '📊',
-        'web': '🌐'
+function getIconForType(type) {
+    // Return simple text labels or code for now, or SVGs if we had a map
+    // For now, let's return a generic file SVG string
+    const svgMap = {
+        'txt': '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>',
+        'pdf': '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v2.5zm2.5 3.5h-2.5V7h2.5c.83 0 1.5.67 1.5 1.5v2.5c0 .83-.67 1.5-1.5 1.5zm4.5 0h-1.5v-1h1.5V9h-1.5v-1h2V7h-3.5v6H18v-2z"/></svg>',
+        'web': '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>'
     };
-    return icons[type] || '📄';
+    return svgMap[type] || svgMap['txt'];
 }
 
 function updateDocCount(count) {
@@ -706,13 +714,13 @@ async function uploadFiles(files) {
             loadDocuments();
 
             // Show toast
-            showToast(`✅ Uploaded: ${file.name}`);
+            showToast(`Uploaded: ${file.name}`);
 
         } catch (error) {
             console.error('Upload error:', error);
             const progress = document.getElementById(progressId);
             if (progress) {
-                progress.innerHTML = `<span style="color:#da1e28;">❌ Failed: ${file.name}</span>`;
+                progress.innerHTML = `<span style="color:#da1e28;">Failed: ${file.name}</span>`;
                 setTimeout(() => progress.remove(), 3000);
             }
         }
@@ -770,13 +778,13 @@ async function addUrl() {
         document.getElementById(progressId)?.remove();
         loadDocuments();
 
-        showToast(`✅ Added: ${url}`);
+        showToast(`Added: ${url}`);
 
     } catch (error) {
         console.error('URL add error:', error);
         const progress = document.getElementById(progressId);
         if (progress) {
-            progress.innerHTML = `<span style="color:#da1e28;">❌ Failed: ${error.message}</span>`;
+            progress.innerHTML = `<span style="color:#da1e28;">Failed: ${error.message}</span>`;
             setTimeout(() => progress.remove(), 3000);
         }
     }
@@ -800,11 +808,11 @@ async function deleteDocument(documentId, event) {
         if (!response.ok) throw new Error('Delete failed');
 
         loadDocuments();
-        showToast('🗑️ Document deleted');
+        showToast('Document deleted');
 
     } catch (error) {
         console.error('Delete error:', error);
-        showToast('❌ Failed to delete document');
+        showToast('Failed to delete document');
     }
 }
 
@@ -830,7 +838,7 @@ function deleteCurrentAgent(event) {
     }
 
     if (currentAgentId === 'agent_default') {
-        showToast('❌ Cannot delete the default agent');
+        showToast('Cannot delete the default agent');
         return;
     }
 
@@ -873,7 +881,7 @@ async function confirmDeleteAgent() {
         delete agents[currentAgentId];
         localStorage.setItem('mcp_agents', JSON.stringify(agents));
 
-        showToast('🗑️ Agent deleted');
+        showToast('Agent deleted');
 
         // Redirect to first available agent or dashboard
         const remainingIds = Object.keys(agents);
@@ -885,7 +893,7 @@ async function confirmDeleteAgent() {
 
     } catch (error) {
         console.error('Delete agent error:', error);
-        showToast(`❌ ${error.message}`);
+        showToast(`${error.message}`);
     }
 }
 
@@ -936,7 +944,7 @@ function renderTemplates(templates) {
         card.className = 'template-card';
         card.onclick = () => createFromTemplate(template.id);
         card.innerHTML = `
-            <div class="template-icon">${template.icon || '🤖'}</div>
+            <div class="template-icon">${template.icon || ''}</div>
             <div class="template-info">
                 <h4>${template.name}</h4>
                 <p>${template.description}</p>
@@ -961,14 +969,14 @@ async function createFromTemplate(templateId) {
         if (response.ok) {
             const data = await response.json();
             closeTemplateModal();
-            showToast(`✅ Created agent: ${data.agent.name}`);
+            showToast(`Created agent: ${data.agent.name}`);
             window.location.href = `orchestrator.html?agent=${data.agent.id}`;
         } else {
-            showToast('❌ Failed to create agent');
+            showToast('Failed to create agent');
         }
     } catch (error) {
         console.error('Error creating from template:', error);
-        showToast('❌ Failed to create agent');
+        showToast('Failed to create agent');
     }
 }
 
@@ -1041,7 +1049,7 @@ async function saveAwsSettings() {
     const logGroup = document.getElementById('aws-log-group').value;
 
     if (!accessKey || !secretKey || !region) {
-        showToast('❌ Please fill in all AWS fields');
+        showToast('Please fill in all AWS fields');
         return;
     }
 
@@ -1062,13 +1070,13 @@ async function saveAwsSettings() {
         });
 
         if (response.ok) {
-            showToast('✅ AWS Settings Saved');
+            showToast('AWS Settings Saved');
             closeSettings();
         } else {
             throw new Error('Failed to save');
         }
     } catch (error) {
-        showToast('❌ Error saving settings');
+        showToast('Error saving settings');
     }
 }
 
@@ -1077,7 +1085,7 @@ async function saveDatadogSettings() {
     const site = document.getElementById('dd-site').value;
 
     if (!apiKey) {
-        showToast('❌ Please enter Datadog API Key');
+        showToast('Please enter Datadog API Key');
         return;
     }
 
@@ -1096,13 +1104,13 @@ async function saveDatadogSettings() {
         });
 
         if (response.ok) {
-            showToast('✅ Datadog Settings Saved');
+            showToast('Datadog Settings Saved');
             closeSettings();
         } else {
             throw new Error('Failed to save');
         }
     } catch (error) {
-        showToast('❌ Error saving settings');
+        showToast('Error saving settings');
     }
 }
 
@@ -1181,7 +1189,7 @@ function selectRegion(regionCode, regionName) {
     }
 
     updateRegionSelection(regionCode);
-    showToast(`✅ Region set to ${regionName}`);
+    showToast(`Region set to ${regionName}`);
 
     setTimeout(() => closeRegionModal(), 500);
 }
@@ -1233,7 +1241,7 @@ function copyApiKey() {
     const input = document.getElementById('api-key-display');
     input.select();
     document.execCommand('copy');
-    showToast('📋 API Key copied to clipboard');
+    showToast('API Key copied to clipboard');
 }
 
 function regenerateApiKey() {
@@ -1241,7 +1249,7 @@ function regenerateApiKey() {
         const newKey = generateApiKeyString();
         localStorage.setItem('agenthub_api_key', newKey);
         document.getElementById('api-key-display').value = newKey;
-        showToast('🔄 API Key regenerated');
+        showToast('API Key regenerated');
     }
 }
 
@@ -1268,7 +1276,7 @@ async function handleLogout() {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_email');
 
-    showToast('👋 Logged out successfully');
+    showToast('Logged out successfully');
 
     setTimeout(() => {
         window.location.href = 'login.html';

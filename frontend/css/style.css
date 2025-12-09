@@ -1,19 +1,74 @@
 :root {
-    /* Light Theme (Default) */
+    /* Professional Light Theme (Default) */
     --primary-blue: #0f62fe;
     --primary-hover: #0353e9;
-    --bg-color: #f4f4f4;
+    --bg-color: #f8f9fa;
     --surface-color: #ffffff;
     --sidebar-bg: #161616;
-    --sidebar-text: #c6c6c6;
-    --text-primary: #161616;
-    --text-secondary: #525252;
-    --border-color: #e0e0e0;
-    --input-bg: #f4f4f4;
+    --sidebar-text: #f4f4f4;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --border-color: #e9ecef;
+    --input-bg: #ffffff;
     --chat-bg: #ffffff;
-    --toast-bg: #333333;
+    --toast-bg: #212529;
     --toast-text: #ffffff;
-    --shadow-color: rgba(0, 0, 0, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.08);
+    --font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Theme Switch in Profile Menu */
+.theme-switch-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    margin-left: 10px;
+}
+
+.theme-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: var(--primary-blue);
+}
+
+input:checked+.slider:before {
+    transform: translateX(16px);
 }
 
 [data-theme="dark"] {

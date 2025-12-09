@@ -390,20 +390,76 @@
             </button>
             <div class="navbar-title">Integrations</div>
             <div class="navbar-right">
-                <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
-                    <svg id="theme-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                        <path
-                            d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z">
-                        </path>
-                    </svg>
-                </button>
-                <button class="profile-btn" onclick="openProfile()" title="Profile">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                        <path
-                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z">
-                        </path>
-                    </svg>
-                </button>
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown" id="profile-dropdown">
+                    <button class="profile-btn" onclick="toggleProfileMenu()" title="Profile">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                            <path
+                                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z">
+                            </path>
+                        </svg>
+                    </button>
+                    <div class="profile-menu" id="profile-menu">
+                        <div class="profile-menu-header">
+                            <div class="profile-avatar">
+                                <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                                    <path
+                                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div class="profile-info">
+                                <span class="profile-name" id="profile-name">Guest User</span>
+                                <span class="profile-email" id="profile-email">Not logged in</span>
+                            </div>
+                        </div>
+                        <div class="profile-menu-divider"></div>
+                        <a href="#" class="profile-menu-item" onclick="openSettingsPage()">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path
+                                    d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+                            </svg>
+                            Settings
+                        </a>
+                        <a href="#" class="profile-menu-item" onclick="openRegionSelector()">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path
+                                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5-2.5 2.5z" />
+                            </svg>
+                            Region
+                            <span class="menu-badge" id="current-region">US-East</span>
+                        </a>
+                        <a href="#" class="profile-menu-item" onclick="openApiKeys()">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path
+                                    d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
+                            </svg>
+                            API Keys
+                        </a>
+                        <div class="profile-menu-item theme-toggle">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                    <path
+                                        d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z">
+                                    </path>
+                                </svg>
+                                Dark Mode
+                            </div>
+                            <label class="theme-switch">
+                                <input type="checkbox" id="theme-checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="profile-menu-divider"></div>
+                        <a href="#" class="profile-menu-item logout" onclick="handleLogout()">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path
+                                    d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
+                            </svg>
+                            Logout
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -411,7 +467,7 @@
         <div class="main-content">
             <div class="integrations-container">
                 <div class="integrations-header">
-                    <h1>🔌 Integrations</h1>
+                    <h1>Integrations</h1>
                     <p>Connect AgentHub with external services for monitoring, logging, and secure secret management.
                     </p>
                 </div>
@@ -419,7 +475,12 @@
                 <!-- External Monitoring Section -->
                 <section class="integration-section">
                     <div class="section-header">
-                        <div class="section-icon monitoring">📊</div>
+                        <div class="section-icon monitoring">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
+                                <path
+                                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
+                            </svg>
+                        </div>
                         <div>
                             <h2>External Monitoring</h2>
                             <span>Send logs and metrics to external observability platforms</span>
@@ -520,7 +581,12 @@
                 <!-- External Vault Section -->
                 <section class="integration-section">
                     <div class="section-header">
-                        <div class="section-icon vault">🔐</div>
+                        <div class="section-icon vault">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
+                                <path
+                                    d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3 3.1-3s3.1 1.29 3.1 3v2z" />
+                            </svg>
+                        </div>
                         <div>
                             <h2>External Vault Integration</h2>
                             <span>Secure secret management and credential storage</span>
@@ -553,7 +619,7 @@
                                 </div>
                             </div>
                             <div class="coming-soon-overlay">
-                                <div class="coming-soon-badge">🚀 Coming Soon</div>
+                                <div class="coming-soon-badge">Coming Soon</div>
                             </div>
                         </div>
 
@@ -582,7 +648,7 @@
                                 </div>
                             </div>
                             <div class="coming-soon-overlay">
-                                <div class="coming-soon-badge">🚀 Coming Soon</div>
+                                <div class="coming-soon-badge">Coming Soon</div>
                             </div>
                         </div>
 
@@ -610,7 +676,7 @@
                                 </div>
                             </div>
                             <div class="coming-soon-overlay">
-                                <div class="coming-soon-badge">🚀 Coming Soon</div>
+                                <div class="coming-soon-badge">Coming Soon</div>
                             </div>
                         </div>
                     </div>
@@ -621,44 +687,10 @@
         <div id="toast" class="toast"></div>
     </div>
 
+    <script src="js/script.js"></script>
+    <script src="js/script.js"></script>
     <script>
-        const API_BASE = 'http://localhost:8000';
-
-        // Sidebar toggle
-        function toggleSidebar() {
-            const nav = document.getElementById('main-nav');
-            const overlay = document.getElementById('sidebar-overlay');
-            nav.classList.toggle('open');
-            overlay.classList.toggle('show');
-        }
-
-        // Theme toggle
-        function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        }
-
-        // Load saved theme
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        }
-
-        // Profile redirect
-        function openProfile() {
-            window.location.href = 'login.html';
-        }
-
-        // Toast notification
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
+        const API_BASE_URL = 'http://localhost:8000'; // Renamed to avoid conflict
 
         // Load existing settings
         async function loadSettings() {
@@ -666,7 +698,7 @@
                 const token = localStorage.getItem('auth_token');
                 if (!token) return;
 
-                const response = await fetch(`${API_BASE}/settings`, {
+                const response = await fetch(`${API_BASE_URL}/settings`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -703,15 +735,15 @@
             const logGroup = document.getElementById('aws-log-group').value;
 
             if (!accessKey || !secretKey || !region) {
-                showToast('❌ Please fill in all required fields');
+                showToast('Please fill in all required fields');
                 return;
             }
 
-            showToast('🔄 Validating AWS credentials...');
+            showToast('Validating AWS credentials...');
 
             try {
                 const token = localStorage.getItem('auth_token');
-                const response = await fetch(`${API_BASE}/settings/aws`, {
+                const response = await fetch(`${API_BASE_URL}/settings/aws`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -728,15 +760,15 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showToast('✅ ' + (data.message || 'AWS CloudWatch connected successfully'));
+                    showToast(data.message || 'AWS CloudWatch connected successfully');
                     document.getElementById('aws-status').textContent = 'Connected';
                     document.getElementById('aws-status').classList.remove('not-connected');
                     document.getElementById('aws-status').classList.add('connected');
                 } else {
-                    showToast('❌ ' + (data.detail || 'Connection failed'));
+                    showToast(data.detail || 'Connection failed');
                 }
             } catch (error) {
-                showToast('❌ Network error - check console');
+                showToast('Network error - check console');
                 console.error(error);
             }
         }
@@ -747,15 +779,15 @@
             const site = document.getElementById('dd-site').value;
 
             if (!apiKey) {
-                showToast('❌ Please enter Datadog API Key');
+                showToast('Please enter Datadog API Key');
                 return;
             }
 
-            showToast('🔄 Validating Datadog API key...');
+            showToast('Validating Datadog API key...');
 
             try {
                 const token = localStorage.getItem('auth_token');
-                const response = await fetch(`${API_BASE}/settings/datadog`, {
+                const response = await fetch(`${API_BASE_URL}/settings/datadog`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -770,15 +802,15 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showToast('✅ ' + (data.message || 'Datadog connected successfully'));
+                    showToast(data.message || 'Datadog connected successfully');
                     document.getElementById('dd-status').textContent = 'Connected';
                     document.getElementById('dd-status').classList.remove('not-connected');
                     document.getElementById('dd-status').classList.add('connected');
                 } else {
-                    showToast('❌ ' + (data.detail || 'Connection failed'));
+                    showToast(data.detail || 'Connection failed');
                 }
             } catch (error) {
-                showToast('❌ Network error - check console');
+                showToast('Network error - check console');
                 console.error(error);
             }
         }
@@ -790,14 +822,14 @@
             const region = document.getElementById('aws-region').value;
 
             if (!accessKey || !secretKey || !region) {
-                showToast('❌ Please fill in Access Key, Secret Key, and Region');
+                showToast('Please fill in Access Key, Secret Key, and Region');
                 return;
             }
 
-            showToast('🔄 Testing AWS connection...');
+            showToast('Testing AWS connection...');
 
             try {
-                const response = await fetch(`${API_BASE}/settings/aws/test`, {
+                const response = await fetch(`${API_BASE_URL}/settings/aws/test`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -811,12 +843,12 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    showToast('✅ ' + data.message);
+                    showToast(data.message);
                 } else {
-                    showToast('❌ ' + data.message);
+                    showToast(data.message);
                 }
             } catch (error) {
-                showToast('❌ Test failed - network error');
+                showToast('Test failed - network error');
                 console.error(error);
             }
         }
@@ -827,14 +859,14 @@
             const site = document.getElementById('dd-site').value;
 
             if (!apiKey) {
-                showToast('❌ Please enter Datadog API Key');
+                showToast('Please enter Datadog API Key');
                 return;
             }
 
-            showToast('🔄 Testing Datadog connection...');
+            showToast('Testing Datadog connection...');
 
             try {
-                const response = await fetch(`${API_BASE}/settings/datadog/test`, {
+                const response = await fetch(`${API_BASE_URL}/settings/datadog/test`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -846,12 +878,12 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    showToast('✅ ' + data.message);
+                    showToast(data.message);
                 } else {
-                    showToast('❌ ' + data.message);
+                    showToast(data.message);
                 }
             } catch (error) {
-                showToast('❌ Test failed - network error');
+                showToast('Test failed - network error');
                 console.error(error);
             }
         }

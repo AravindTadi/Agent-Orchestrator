@@ -45,13 +45,7 @@
             </button>
             <div class="navbar-title">Orchestrate</div>
             <div class="navbar-right">
-                <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
-                    <svg id="theme-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                        <path
-                            d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z">
-                        </path>
-                    </svg>
-                </button>
+
 
                 <!-- Profile Dropdown -->
                 <div class="profile-dropdown" id="profile-dropdown">
@@ -92,13 +86,22 @@
                             Region
                             <span class="menu-badge" id="current-region">US-East</span>
                         </a>
-                        <a href="#" class="profile-menu-item" onclick="openApiKeys()">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                                <path
-                                    d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
-                            </svg>
-                            API Keys
+                        API Keys
                         </a>
+                        <div class="profile-menu-item theme-toggle">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                    <path
+                                        d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z">
+                                    </path>
+                                </svg>
+                                Dark Mode
+                            </div>
+                            <label class="theme-switch">
+                                <input type="checkbox" id="theme-checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                         <div class="profile-menu-divider"></div>
                         <a href="#" class="profile-menu-item logout" onclick="handleLogout()">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
@@ -192,7 +195,13 @@
                         <!-- Knowledge Base Section -->
                         <div class="form-group knowledge-base-section">
                             <label>
-                                📚 Knowledge Base (RAG)
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                        <path
+                                            d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z" />
+                                    </svg>
+                                    Knowledge Base (RAG)
+                                </div>
                                 <span class="doc-count" id="doc-count">0 documents</span>
                             </label>
 
@@ -203,7 +212,13 @@
                                 ondragleave="handleDragLeave(event)">
                                 <input type="file" id="file-input" accept=".txt,.pdf,.docx,.doc,.csv" multiple hidden
                                     onchange="handleFileSelect(event)">
-                                <div class="upload-icon">📄</div>
+                                <div class="upload-icon">
+                                    <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor"
+                                        style="opacity:0.5;">
+                                        <path
+                                            d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                                    </svg>
+                                </div>
                                 <p>Drag & drop files here or <span class="upload-link">browse</span></p>
                                 <p class="hint">Supports: TXT, PDF, DOCX, CSV</p>
                             </div>
@@ -270,7 +285,7 @@
                 <div class="modal-dialog">
                     <h3>Delete Agent</h3>
                     <p id="delete-modal-message">Are you sure you want to delete this agent?</p>
-                    <p class="modal-warning">⚠️ This will also delete all documents in its knowledge base.</p>
+                    <p class="modal-warning">This will also delete all documents in its knowledge base.</p>
                     <div class="modal-buttons">
                         <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
                         <button class="modal-btn modal-btn-delete" onclick="confirmDeleteAgent()">Delete</button>
@@ -335,7 +350,7 @@
             <div class="modal-overlay" id="region-modal" onclick="closeRegionModal(event)">
                 <div class="modal-content" onclick="event.stopPropagation()">
                     <div class="modal-header">
-                        <h3>🌍 Select Region</h3>
+                        <h3>Select Region</h3>
                         <button class="modal-close" onclick="closeRegionModal()">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                                 <path
@@ -347,7 +362,7 @@
                         <div class="region-list">
                             <div class="region-option active"
                                 onclick="selectRegion('us-east-1', 'US East (N. Virginia)')">
-                                <span class="region-flag">🇺🇸</span>
+                                <span class="region-flag">US</span>
                                 <div class="region-details">
                                     <span class="region-name">US East (N. Virginia)</span>
                                     <span class="region-code">us-east-1</span>
@@ -358,7 +373,7 @@
                                 </svg>
                             </div>
                             <div class="region-option" onclick="selectRegion('us-west-2', 'US West (Oregon)')">
-                                <span class="region-flag">🇺🇸</span>
+                                <span class="region-flag">US</span>
                                 <div class="region-details">
                                     <span class="region-name">US West (Oregon)</span>
                                     <span class="region-code">us-west-2</span>
@@ -369,7 +384,7 @@
                                 </svg>
                             </div>
                             <div class="region-option" onclick="selectRegion('eu-west-1', 'Europe (Ireland)')">
-                                <span class="region-flag">🇪🇺</span>
+                                <span class="region-flag">EU</span>
                                 <div class="region-details">
                                     <span class="region-name">Europe (Ireland)</span>
                                     <span class="region-code">eu-west-1</span>
@@ -381,7 +396,7 @@
                             </div>
                             <div class="region-option"
                                 onclick="selectRegion('ap-southeast-1', 'Asia Pacific (Singapore)')">
-                                <span class="region-flag">🇸🇬</span>
+                                <span class="region-flag">SG</span>
                                 <div class="region-details">
                                     <span class="region-name">Asia Pacific (Singapore)</span>
                                     <span class="region-code">ap-southeast-1</span>
@@ -400,7 +415,7 @@
             <div class="modal-overlay" id="apikeys-modal" onclick="closeApiKeysModal(event)">
                 <div class="modal-content" onclick="event.stopPropagation()">
                     <div class="modal-header">
-                        <h3>🔑 API Keys</h3>
+                        <h3>API Keys</h3>
                         <button class="modal-close" onclick="closeApiKeysModal()">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                                 <path
@@ -440,7 +455,7 @@
             <div class="modal-overlay" id="template-modal" onclick="closeTemplateModal(event)">
                 <div class="modal-content" style="max-width: 700px;" onclick="event.stopPropagation()">
                     <div class="modal-header">
-                        <h3>🚀 Create New Agent</h3>
+                        <h3>Create New Agent</h3>
                         <button class="modal-close" onclick="closeTemplateModal()">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                                 <path
@@ -455,7 +470,11 @@
                         <div class="template-grid" id="template-grid">
                             <!-- Blank Agent Card -->
                             <div class="template-card" onclick="createBlankAgent()">
-                                <div class="template-icon">✨</div>
+                                <div class="template-icon">
+                                    <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                                    </svg>
+                                </div>
                                 <div class="template-info">
                                     <h4>Blank Agent</h4>
                                     <p>Start from scratch with a clean slate</p>
