@@ -980,10 +980,7 @@ async function createFromTemplate(templateId) {
     }
 }
 
-// Profile button - redirect to login/profile page
-function openProfile() {
-    window.location.href = 'login.html';
-}
+
 
 // --- Settings & Integrations ---
 
