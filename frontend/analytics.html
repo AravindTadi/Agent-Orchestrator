@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -69,7 +69,7 @@
         .filter-select:focus {
             outline: none;
             border-color: var(--primary-blue);
-            box-shadow: 0 0 0 3px rgba(15, 98, 254, 0.1);
+            box-shadow: 0 0 0 3px rgba(0, 109, 156, 0.1);
         }
 
         .date-range-select {
@@ -143,7 +143,7 @@
         }
 
         .stat-icon.blue {
-            background: rgba(15, 98, 254, 0.1);
+            background: rgba(0, 109, 156, 0.1);
             color: var(--primary-blue);
         }
 
@@ -242,7 +242,7 @@
         }
 
         .bar-fill.blue {
-            background: linear-gradient(90deg, var(--primary-blue), #0353e9);
+            background: var(--primary-blue);
         }
 
         .bar-fill.purple {
@@ -397,7 +397,7 @@
             width: 36px;
             height: 36px;
             border-radius: 8px;
-            background: linear-gradient(135deg, var(--primary-blue), #6929c4);
+            background: var(--primary-blue);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -516,7 +516,7 @@
             <div class="navbar-right">
                 <!-- Profile Dropdown -->
                 <div class="profile-dropdown" id="profile-dropdown">
-                    <button class="profile-btn" onclick="toggleProfileMenu()" title="Profile">
+                    <button class="profile-btn" onclick="toggleProfileMenu()" title="Profile" type="button">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
                             <path
                                 d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z">
@@ -560,20 +560,7 @@
                             </svg>
                             API Keys
                         </a>
-                        <div class="profile-menu-item theme-toggle">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                                    <path
-                                        d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z">
-                                    </path>
-                                </svg>
-                                Dark Mode
-                            </div>
-                            <label class="theme-switch">
-                                <input type="checkbox" id="theme-checkbox">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+
                         <div class="profile-menu-divider"></div>
                         <a href="#" class="profile-menu-item logout" onclick="handleLogout()">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
@@ -703,7 +690,7 @@
                         </div>
                         <div class="doughnut-container">
                             <div class="doughnut-chart" id="message-type-chart"
-                                style="background: conic-gradient(var(--primary-blue) 0% 50%, #6929c4 50% 100%);">
+                                style="background: conic-gradient(var(--primary-blue) 0% 50%, #005a82 50% 100%);">
                                 <div class="doughnut-center">
                                     <div class="doughnut-center-value" id="doughnut-total">0</div>
                                     <div class="doughnut-center-label">Total</div>
@@ -716,7 +703,7 @@
                                     <span class="legend-value" id="legend-user">0</span>
                                 </div>
                                 <div class="legend-item">
-                                    <div class="legend-color" style="background: #6929c4;"></div>
+                                    <div class="legend-color" style="background: #005a82;"></div>
                                     <span class="legend-label">Assistant Responses</span>
                                     <span class="legend-value" id="legend-assistant">0</span>
                                 </div>

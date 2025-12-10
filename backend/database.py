@@ -47,11 +47,19 @@ def init_db():
                 description TEXT,
                 system_prompt TEXT,
                 model TEXT DEFAULT 'llama-3.3-70b-versatile',
+                tools TEXT DEFAULT '[]',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         
+        # Check if tools column exists (migration)
+        try:
+            cursor.execute("SELECT tools FROM agents LIMIT 1")
+        except sqlite3.OperationalError:
+            print("⚠️ Migrating database: Adding tools column to agents table...")
+            cursor.execute("ALTER TABLE agents ADD COLUMN tools TEXT DEFAULT '[]'")
+
         # API Keys table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS api_keys (
@@ -62,92 +70,23 @@ def init_db():
             )
         """)
         
-        # Chat Sessions table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS chat_sessions (
-                id TEXT PRIMARY KEY,
-                agent_id TEXT NOT NULL,
-                user_id TEXT,
-                title TEXT DEFAULT 'New Chat',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (agent_id) REFERENCES agents(id)
-            )
-        """)
-        
-        # Chat Messages table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS chat_messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                session_id TEXT NOT NULL,
-                role TEXT NOT NULL,
-                content TEXT NOT NULL,
-                metadata TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (session_id) REFERENCES chat_sessions(id)
-            )
-        """)
-        
-        # Agent Templates table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS agent_templates (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                description TEXT,
-                system_prompt TEXT,
-                category TEXT,
-                icon TEXT
-            )
-        """)
-        
-        # Insert default agent if none exist
-        cursor.execute("SELECT COUNT(*) FROM agents")
-        if cursor.fetchone()[0] == 0:
-            cursor.execute("""
-                INSERT INTO agents (id, name, description, system_prompt)
-                VALUES (?, ?, ?, ?)
-            """, (
-                "agent_default",
-                "My First Agent",
-                "A helpful AI assistant ready to be configured.",
-                "You are a helpful AI assistant."
-            ))
-        
-        # Insert agent templates if none exist
-        cursor.execute("SELECT COUNT(*) FROM agent_templates")
-        if cursor.fetchone()[0] == 0:
-            templates = [
-                ("tpl_coding", "Code Assistant", "Expert programmer that helps with coding tasks", 
-                 "You are an expert software engineer. Help users write clean, efficient code. Explain your reasoning and suggest best practices.", "Development", "💻"),
-                ("tpl_writer", "Creative Writer", "Helps with writing, editing, and content creation",
-                 "You are a creative writing assistant. Help users craft compelling stories, articles, and content. Focus on clarity, engagement, and style.", "Content", "✍️"),
-                ("tpl_analyst", "Data Analyst", "Analyzes data and provides insights",
-                 "You are a data analyst expert. Help users understand data, create visualizations, and derive actionable insights. Be precise and thorough.", "Analytics", "📊"),
-                ("tpl_support", "Customer Support", "Friendly customer service agent",
-                 "You are a friendly and helpful customer support agent. Resolve issues efficiently, maintain a positive tone, and ensure customer satisfaction.", "Support", "🎧"),
-                ("tpl_researcher", "Research Assistant", "Helps with research and information gathering",
-                 "You are a research assistant. Help users find, synthesize, and summarize information. Cite sources when possible and be thorough.", "Research", "🔍"),
-                ("tpl_aws", "AWS Expert", "Amazon Web Services specialist",
-                 "You are an AWS cloud computing expert. Help users with AWS services, architecture decisions, cost optimization, and best practices. You have access to S3 bucket management tools.", "Cloud", "☁️"),
-            ]
-            cursor.executemany("""
-                INSERT INTO agent_templates (id, name, description, system_prompt, category, icon)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, templates)
-        
-        print("✅ Database initialized!")
+        # ... (rest of init_db) ...
 
+# ...
 
-# --- Agent CRUD Operations ---
-
-def create_agent(agent_id: str, name: str, description: str = "", system_prompt: str = "", model: str = "llama-3.3-70b-versatile") -> Dict:
+def create_agent(agent_id: str, name: str, description: str = "", system_prompt: str = "", model: str = "llama-3.3-70b-versatile", tools: List[str] = None) -> Dict:
     """Create a new agent."""
+    if tools is None:
+        tools = []
+    
+    tools_json = json.dumps(tools)
+    
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO agents (id, name, description, system_prompt, model)
-            VALUES (?, ?, ?, ?, ?)
-        """, (agent_id, name, description, system_prompt, model))
+            INSERT INTO agents (id, name, description, system_prompt, model, tools)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (agent_id, name, description, system_prompt, model, tools_json))
         
     return get_agent(agent_id)
 
@@ -159,6 +98,9 @@ def save_agent(agent_data: Dict[str, Any]) -> Dict:
     description = agent_data.get("description", "")
     system_prompt = agent_data.get("system_prompt", "")
     model = agent_data.get("model", "llama-3.3-70b-versatile")
+    tools = agent_data.get("tools", [])
+    
+    tools_json = json.dumps(tools)
     
     with get_db() as conn:
         cursor = conn.cursor()
@@ -167,14 +109,14 @@ def save_agent(agent_data: Dict[str, Any]) -> Dict:
         if cursor.fetchone():
             cursor.execute("""
                 UPDATE agents 
-                SET name = ?, description = ?, system_prompt = ?, model = ?, updated_at = CURRENT_TIMESTAMP
+                SET name = ?, description = ?, system_prompt = ?, model = ?, tools = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
-            """, (name, description, system_prompt, model, agent_id))
+            """, (name, description, system_prompt, model, tools_json, agent_id))
         else:
             cursor.execute("""
-                INSERT INTO agents (id, name, description, system_prompt, model)
-                VALUES (?, ?, ?, ?, ?)
-            """, (agent_id, name, description, system_prompt, model))
+                INSERT INTO agents (id, name, description, system_prompt, model, tools)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (agent_id, name, description, system_prompt, model, tools_json))
             
     return get_agent(agent_id)
 
@@ -187,7 +129,15 @@ def get_agent(agent_id: str) -> Optional[Dict]:
         row = cursor.fetchone()
         
         if row:
-            return dict(row)
+            agent = dict(row)
+            if agent.get('tools'):
+                try:
+                    agent['tools'] = json.loads(agent['tools'])
+                except:
+                    agent['tools'] = []
+            else:
+                agent['tools'] = []
+            return agent
         return None
 
 
@@ -196,16 +146,31 @@ def get_all_agents() -> List[Dict]:
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM agents ORDER BY created_at DESC")
-        return [dict(row) for row in cursor.fetchall()]
+        agents = []
+        for row in cursor.fetchall():
+            agent = dict(row)
+            if agent.get('tools'):
+                try:
+                    agent['tools'] = json.loads(agent['tools'])
+                except:
+                    agent['tools'] = []
+            else:
+                agent['tools'] = []
+            agents.append(agent)
+        return agents
 
 
 def update_agent(agent_id: str, **kwargs) -> Optional[Dict]:
     """Update an agent."""
-    allowed_fields = ['name', 'description', 'system_prompt', 'model']
+    allowed_fields = ['name', 'description', 'system_prompt', 'model', 'tools']
     updates = {k: v for k, v in kwargs.items() if k in allowed_fields}
     
     if not updates:
         return get_agent(agent_id)
+    
+    # Handle tools serialization
+    if 'tools' in updates:
+        updates['tools'] = json.dumps(updates['tools'])
     
     set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
     values = list(updates.values()) + [agent_id]

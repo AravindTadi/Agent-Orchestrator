@@ -1,13 +1,13 @@
 :root {
     /* Professional Light Theme (Default) */
-    --primary-blue: #0f62fe;
-    --primary-hover: #0353e9;
+    --primary-blue: #006D9C;
+    --primary-hover: #00557a;
     --bg-color: #f8f9fa;
     --surface-color: #ffffff;
     --sidebar-bg: #161616;
     --sidebar-text: #f4f4f4;
-    --text-primary: #212529;
-    --text-secondary: #6c757d;
+    --text-primary: #161616;
+    --text-secondary: #525252;
     --border-color: #e9ecef;
     --input-bg: #ffffff;
     --chat-bg: #ffffff;
@@ -367,8 +367,11 @@ body {
 /* Center Config Panel */
 .config-panel {
     background-color: var(--bg-color);
-    padding: 2rem;
-    overflow-y: auto;
+    padding: 0;
+    overflow-y: hidden;
+    /* Let inner content scroll */
+    display: flex;
+    flex-direction: column;
 }
 
 .config-header {
@@ -1209,8 +1212,8 @@ body {
 /* Enhanced Config Panel Styles */
 .config-panel {
     background: linear-gradient(180deg, var(--bg-color) 0%, var(--surface-color) 100%);
-    padding: 2.5rem;
-    overflow-y: auto;
+    padding: 0;
+    overflow-y: hidden;
 }
 
 .config-header {
@@ -2041,4 +2044,756 @@ body {
 .new-chat-btn:hover {
     border-color: var(--primary-blue);
     color: var(--primary-blue);
+}
+
+/* Chat History Sidebar */
+.chat-history-sidebar {
+    width: 260px;
+    background: var(--surface-color);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-history-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-history-header h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.new-chat-icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.new-chat-icon-btn:hover {
+    background: var(--input-bg);
+    color: var(--primary-blue);
+}
+
+.chat-session-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.chat-session-item {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 4px;
+    border: 1px solid transparent;
+}
+
+.chat-session-item:hover {
+    background: var(--input-bg);
+}
+
+.chat-session-item.active {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    border-left: 3px solid var(--primary-blue);
+}
+
+.chat-session-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-session-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.chat-session-date {
+    font-size: 0.75rem;
+}
+
+.chat-page-layout {
+    display: flex;
+    height: 100%;
+    overflow: hidden;
+}
+
+.chat-interface {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-color);
+    position: relative;
+}
+
+/* ========================================
+   IBM Watsonx Orchestrate Style
+   ======================================== */
+
+/* Agent Header Bar */
+.agent-header-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--surface-color);
+}
+
+.agent-icon-box {
+    width: 40px;
+    height: 40px;
+    background: var(--input-bg);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.agent-header-bar .editable-name-container {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.agent-header-bar .agent-name-input {
+    font-size: 1.25rem;
+    font-weight: 600;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    padding: 0;
+    width: auto;
+    min-width: 150px;
+}
+
+.agent-header-bar .agent-name-input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.agent-header-bar .edit-icon-btn {
+    opacity: 0.5;
+}
+
+.agent-header-bar .edit-icon-btn:hover {
+    opacity: 1;
+}
+
+.agent-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deploy-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.deploy-btn:hover {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: white;
+}
+
+.agent-header-bar .delete-agent-btn {
+    background: transparent;
+    border: none;
+    padding: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.agent-header-bar .delete-agent-btn:hover {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* Watsonx Layout - Vertical Tabs + Content */
+.watsonx-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Vertical Config Tabs */
+.config-tabs {
+    display: flex;
+    flex-direction: column;
+    width: 140px;
+    min-width: 140px;
+    background: var(--surface-color);
+    border-right: 1px solid var(--border-color);
+    padding: 16px 0;
+}
+
+.config-tab {
+    display: block;
+    width: 100%;
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    text-align: left;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.config-tab:hover {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+.config-tab.active {
+    border-left-color: var(--primary-blue);
+    color: var(--text-primary);
+    background: var(--input-bg);
+    font-weight: 600;
+}
+
+/* Tab Content Area */
+.config-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 32px;
+    background: var(--bg-color);
+    scroll-behavior: smooth;
+}
+
+.tab-panel {
+    display: block;
+    margin-bottom: 40px;
+}
+
+/* .tab-panel.active {
+    display: block;
+} */
+
+/* Section Block */
+.section-block {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+}
+
+.section-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.section-header-row h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+}
+
+.section-hint {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0 0 16px 0;
+    line-height: 1.4;
+}
+
+.section-block textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.15s;
+}
+
+.section-block textarea:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+}
+
+/* Add Item Button (IBM Style) */
+.add-item-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid var(--primary-blue);
+    color: var(--primary-blue);
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.add-item-btn:hover {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.add-item-btn.inline {
+    border-radius: 0 4px 4px 0;
+}
+
+.item-count {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    background: var(--input-bg);
+    border-radius: 4px;
+}
+
+/* Tool List (IBM Style) */
+.tool-list {
+    margin-top: 16px;
+}
+
+.tool-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    transition: all 0.15s;
+}
+
+.tool-item:hover {
+    border-color: var(--text-secondary);
+}
+
+.tool-item-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.tool-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.tool-item-name {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.tool-item-desc {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.tool-item-menu {
+    background: transparent;
+    border: none;
+    padding: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.tool-item-menu:hover {
+    background: var(--surface-color);
+    color: var(--text-primary);
+}
+
+/* URL Input Group with IBM Style */
+.url-input-group {
+    display: flex;
+    margin-top: 16px;
+}
+
+.url-input-group input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-right: none;
+    border-radius: 4px 0 0 4px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.url-input-group input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+}
+
+/* Upload Area - Cleaner Style */
+.upload-area {
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--input-bg);
+}
+
+.upload-area:hover {
+    border-color: var(--primary-blue);
+    background: rgba(15, 98, 254, 0.02);
+}
+
+.upload-area .upload-icon {
+    color: var(--text-secondary);
+    opacity: 0.5;
+    margin-bottom: 12px;
+}
+
+.upload-area p {
+    margin: 4px 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.upload-area .upload-link {
+    color: var(--primary-blue);
+    font-weight: 500;
+}
+
+/* Config Panel adjustments */
+.config-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ==================== Chat Page Redesign ==================== */
+.chat-page-layout {
+    display: flex;
+    height: 100%;
+    overflow: hidden;
+}
+
+.chat-interface {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-color);
+    position: relative;
+}
+
+.agent-sidebar-right {
+    width: 320px;
+    background: var(--surface-color);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.agent-list-right {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.agent-card-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.agent-card-item:hover {
+    border-color: var(--primary-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.agent-card-item.active {
+    border-color: var(--primary-blue);
+    background: rgba(0, 109, 156, 0.05);
+}
+
+.agent-avatar-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--primary-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.agent-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.agent-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.agent-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.agent-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e0e0e0;
+}
+
+.agent-card-item.active .agent-status {
+    background: #24a148;
+    box-shadow: 0 0 6px rgba(36, 161, 72, 0.4);
+}
+
+.no-agents {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-top: 2rem;
+}
+
+/* Chat Interface Adjustments */
+.chat-interface .chat-header {
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+}
+
+.chat-interface .chat-history {
+    background: var(--bg-color);
+}
+
+.chat-interface .chat-input-area {
+    background: var(--surface-color);
+    border-top: 1px solid var(--border-color);
+    padding: 1.5rem;
+}
+
+.empty-state-icon {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.agent-avatar-large {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: var(--primary-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0 auto 1.5rem auto;
+    box-shadow: 0 8px 24px rgba(0, 109, 156, 0.25);
+}
+
+/* Add Tool Modal Styles */
+.tool-list-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.tool-item-modal {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.tool-item-modal:hover {
+    border-color: var(--primary-blue);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.add-tool-btn {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+box-shadow: 0 2px 8px rgba(0, 109, 156, 0.3);
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: var(--input-bg);
+    border-color: var(--text-secondary);
+}
+
+/* Streaming UI Enhancements */
+.reasoning-content {
+    background: var(--input-bg);
+    padding: 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+    border-left: 3px solid var(--primary-blue);
+    display: none;
+    /* Hidden by default */
+}
+
+.sources-container {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.sources-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-right: 4px;
+}
+
+.source-pill {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    cursor: help;
+}
+
+/* Typing Cursor Effect */
+.message-text::after {
+    content: '▋';
+    display: inline-block;
+    vertical-align: bottom;
+    animation: blink 1s step-start infinite;
+    color: var(--primary-blue);
+    opacity: 0;
+}
+
+.message.assistant:last-child .message-text:not(:empty)::after {
+    opacity: 1;
+    /* Only show on the very last message if it's assistant */
+}
+
+/* Only show cursor when streaming is active (we can toggle a class on the message container) */
+.message.streaming .message-text::after {
+    opacity: 1;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
 }

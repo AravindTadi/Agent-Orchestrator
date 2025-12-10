@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agent Orchestrator</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=watsonx">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
         rel="stylesheet">
 </head>
@@ -49,7 +49,7 @@
 
                 <!-- Profile Dropdown -->
                 <div class="profile-dropdown" id="profile-dropdown">
-                    <button class="profile-btn" onclick="toggleProfileMenu()" title="Profile">
+                    <button class="profile-btn" onclick="toggleProfileMenu()" title="Profile" type="button">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
                             <path
                                 d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z">
@@ -86,22 +86,14 @@
                             Region
                             <span class="menu-badge" id="current-region">US-East</span>
                         </a>
-                        API Keys
+                        <a href="#" class="profile-menu-item" onclick="openApiKeys()">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path
+                                    d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
+                            </svg>
+                            API Keys
                         </a>
-                        <div class="profile-menu-item theme-toggle">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                                    <path
-                                        d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z">
-                                    </path>
-                                </svg>
-                                Dark Mode
-                            </div>
-                            <label class="theme-switch">
-                                <input type="checkbox" id="theme-checkbox">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+
                         <div class="profile-menu-divider"></div>
                         <a href="#" class="profile-menu-item logout" onclick="handleLogout()">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
@@ -128,15 +120,17 @@
                     </button>
                 </aside>
 
-                <!-- Center Panel: Agent Configuration -->
+                <!-- Center Panel: Agent Configuration - IBM Watsonx Style -->
                 <main class="config-panel">
-                    <div class="config-header">
+                    <!-- Agent Header with breadcrumb style -->
+                    <div class="agent-header-bar">
+
                         <div class="editable-name-container">
                             <input type="text" id="agent-name-header" class="agent-name-input" placeholder="Agent Name"
                                 onblur="saveNameFromHeader()" onkeypress="handleNameKeyPress(event)" maxlength="15"
                                 oninput="checkNameLimit(this)">
                             <button class="edit-icon-btn" onclick="focusNameInput()">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                                     <path
                                         d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z">
                                     </path>
@@ -144,97 +138,143 @@
                             </button>
                             <span id="name-limit-msg" class="limit-msg">Max 15 chars</span>
                         </div>
-                        <button class="delete-agent-btn" id="delete-agent-btn" onclick="deleteCurrentAgent(event)"
-                            title="Delete Agent" type="button">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z">
-                                </path>
-                            </svg>
-                            Delete Agent
-                        </button>
-                    </div>
-
-                    <div class="config-form">
-                        <!-- Name Input Removed -->
-
-                        <div class="form-group">
-                            <label>Description</label>
-                            <textarea id="agent-desc" rows="2" placeholder="What does this agent do?"
-                                oninput="autoSaveAgentConfig()"></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="agent-prompt">Behavior / System Prompt</label>
-                            <textarea id="agent-prompt" placeholder="You are a helpful assistant who..."
-                                oninput="autoSaveAgentConfig()"></textarea>
-                            <p class="hint">Define the personality and rules for this agent.</p>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Capabilities</label>
-                            <div class="capabilities-list">
-                                <label class="checkbox-container">
-                                    <input type="checkbox" checked disabled>
-                                    <span class="checkmark"></span>
-                                    AWS Tools (S3 Management)
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Save Button (visible when creating new agent) -->
-                        <div class="form-actions" id="form-actions">
-                            <button class="save-agent-btn" id="save-agent-btn" onclick="saveAgentConfig(false)">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <div class="agent-header-actions">
+                            <button class="deploy-btn" onclick="saveAgentConfig(false)">
+                                Deploy
+                            </button>
+                            <button class="delete-agent-btn" id="delete-agent-btn" onclick="deleteCurrentAgent(event)"
+                                title="Delete Agent" type="button">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                                     <path
-                                        d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z">
+                                        d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z">
                                     </path>
                                 </svg>
-                                Save Agent
                             </button>
                         </div>
-                        <!-- Knowledge Base Section -->
-                        <div class="form-group knowledge-base-section">
-                            <label>
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                                        <path
-                                            d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z" />
-                                    </svg>
-                                    Knowledge Base (RAG)
+                    </div>
+
+                    <!-- IBM Watsonx Style Layout: Vertical Tabs + Content -->
+                    <div class="watsonx-layout">
+                        <!-- Left Vertical Tabs -->
+                        <nav class="config-tabs">
+                            <button class="config-tab active" data-tab="profile" onclick="switchConfigTab('profile')">
+                                Profile
+                            </button>
+                            <button class="config-tab" data-tab="tools" onclick="switchConfigTab('tools')">
+                                Tools
+                            </button>
+                            <button class="config-tab" data-tab="knowledge" onclick="switchConfigTab('knowledge')">
+                                Knowledge
+                            </button>
+                            <button class="config-tab" data-tab="behavior" onclick="switchConfigTab('behavior')">
+                                Behavior
+                            </button>
+                        </nav>
+
+                        <!-- Tab Content Panels -->
+                        <div class="config-content">
+
+                            <!-- Profile Tab -->
+                            <section class="tab-panel active" id="tab-profile">
+                                <div class="section-block">
+                                    <div class="section-header-row">
+                                        <h3>Description</h3>
+                                    </div>
+                                    <p class="section-hint">Describe what this agent does and its purpose.</p>
+                                    <textarea id="agent-desc" rows="3" placeholder="What does this agent do?"
+                                        oninput="autoSaveAgentConfig()"></textarea>
                                 </div>
-                                <span class="doc-count" id="doc-count">0 documents</span>
-                            </label>
+                            </section>
 
-                            <!-- Upload Area -->
-                            <div class="upload-area" id="upload-area"
-                                onclick="document.getElementById('file-input').click()"
-                                ondragover="handleDragOver(event)" ondrop="handleDrop(event)"
-                                ondragleave="handleDragLeave(event)">
-                                <input type="file" id="file-input" accept=".txt,.pdf,.docx,.doc,.csv" multiple hidden
-                                    onchange="handleFileSelect(event)">
-                                <div class="upload-icon">
-                                    <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor"
-                                        style="opacity:0.5;">
-                                        <path
-                                            d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
-                                    </svg>
+                            <!-- Tools Tab -->
+                            <section class="tab-panel" id="tab-tools">
+                                <div class="section-block">
+                                    <div class="section-header-row">
+                                        <div>
+                                            <h3>Tools</h3>
+                                            <p class="section-hint">Give your agent access to tools to help it
+                                                accomplish tasks.</p>
+                                        </div>
+                                        <button class="add-item-btn" onclick="openAddToolModal()">
+                                            Add tool
+                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <!-- Tool List -->
+                                    <div class="tool-list" id="tool-list">
+                                        <!-- Tools will be injected here -->
+                                    </div>
                                 </div>
-                                <p>Drag & drop files here or <span class="upload-link">browse</span></p>
-                                <p class="hint">Supports: TXT, PDF, DOCX, CSV</p>
-                            </div>
+                            </section>
 
-                            <!-- URL Input -->
-                            <div class="url-input-group">
-                                <input type="url" id="url-input" placeholder="https://example.com/page-to-learn-from"
-                                    onkeypress="if(event.key==='Enter') addUrl()">
-                                <button class="add-url-btn" onclick="addUrl()">+ Add URL</button>
-                            </div>
+                            <!-- Knowledge Tab -->
+                            <section class="tab-panel" id="tab-knowledge">
+                                <div class="section-block">
+                                    <div class="section-header-row">
+                                        <div>
+                                            <h3>Knowledge Base</h3>
+                                            <p class="section-hint">Add documents and URLs for your agent to learn from.
+                                            </p>
+                                        </div>
+                                        <span class="item-count" id="doc-count">0 documents</span>
+                                    </div>
 
-                            <!-- Document List -->
-                            <div class="document-list" id="document-list">
-                                <!-- Documents will be rendered here -->
-                            </div>
+                                    <!-- Upload Area -->
+                                    <div class="upload-area" id="upload-area"
+                                        onclick="document.getElementById('file-input').click()"
+                                        ondragover="handleDragOver(event)" ondrop="handleDrop(event)"
+                                        ondragleave="handleDragLeave(event)">
+                                        <input type="file" id="file-input" accept=".txt,.pdf,.docx,.doc,.csv" multiple
+                                            hidden onchange="handleFileSelect(event)">
+                                        <div class="upload-icon">
+                                            <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor">
+                                                <path
+                                                    d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                                            </svg>
+                                        </div>
+                                        <p>Drag & drop files here or <span class="upload-link">browse</span></p>
+                                        <p class="hint">Supports: TXT, PDF, DOCX, CSV</p>
+                                    </div>
+
+                                    <!-- URL Input -->
+                                    <div class="url-input-group">
+                                        <input type="url" id="url-input"
+                                            placeholder="https://example.com/page-to-learn-from"
+                                            onkeypress="if(event.key==='Enter') addUrl()">
+                                        <button class="add-item-btn inline" onclick="addUrl()">
+                                            Add URL
+                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <!-- Document List -->
+                                    <div class="document-list" id="document-list">
+                                        <!-- Documents will be rendered here -->
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Behavior Tab -->
+                            <section class="tab-panel" id="tab-behavior">
+                                <div class="section-block">
+                                    <div class="section-header-row">
+                                        <h3>System Prompt</h3>
+                                    </div>
+                                    <p class="section-hint">Define the personality, rules, and behavior for this agent.
+                                    </p>
+                                    <textarea id="agent-prompt" rows="8"
+                                        placeholder="You are a helpful assistant who..."
+                                        oninput="autoSaveAgentConfig()"></textarea>
+                                </div>
+                            </section>
+
                         </div>
+                    </div>
                 </main>
 
                 <!-- Right Sidebar: Chat -->
@@ -296,6 +336,36 @@
             <!-- Shared Modals injected by js/modals.js -->
             <script src="js/modals.js"></script>
 
+            <!-- Add Tool Modal -->
+            <div class="modal-overlay" id="add-tool-modal" onclick="closeAddToolModal(event)">
+                <div class="modal-content" style="max-width: 600px;" onclick="event.stopPropagation()">
+                    <div class="modal-header">
+                        <h3>Add Tool to Agent</h3>
+                        <button class="modal-close" onclick="closeAddToolModal()">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <path
+                                    d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                            Select a tool to add to this agent.
+                        </p>
+                        <div class="tool-list-modal" id="available-tools-list">
+                            <!-- Available tools will be injected here -->
+                        </div>
+                    </div>
+                    <div class="modal-footer"
+                        style="padding: 16px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+                        <button class="btn-secondary"
+                            onclick="window.location.href='tools.html?agent=' + currentAgentId">
+                            Browse Full Catalog
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Template Picker Modal -->
             <div class="modal-overlay" id="template-modal" onclick="closeTemplateModal(event)">
                 <div class="modal-content" style="max-width: 700px;" onclick="event.stopPropagation()">
@@ -331,7 +401,7 @@
                 </div>
             </div>
 
-            <script src="js/script.js?v=7"></script>
+            <script src="js/script.js?v=15"></script>
         </div> <!-- End main-content -->
     </div> <!-- End app-container -->
 </body>

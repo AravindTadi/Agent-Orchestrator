@@ -60,7 +60,7 @@
         }
 
         .section-icon.monitoring {
-            background: linear-gradient(135deg, #0f62fe 0%, #6929c4 100%);
+            background: var(--primary-blue);
         }
 
         .section-icon.vault {
@@ -103,7 +103,7 @@
             left: 0;
             right: 0;
             height: 3px;
-            background: linear-gradient(90deg, var(--primary-blue) 0%, #6929c4 100%);
+            background: var(--primary-blue);
             opacity: 0;
             transition: opacity 0.3s;
         }
@@ -236,7 +236,7 @@
         .input-group select:focus {
             outline: none;
             border-color: var(--primary-blue);
-            box-shadow: 0 0 0 3px rgba(15, 98, 254, 0.1);
+            box-shadow: 0 0 0 3px rgba(0, 109, 156, 0.1);
         }
 
         .input-group input::placeholder {
@@ -266,13 +266,13 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, #0353e9 100%);
+            background: var(--primary-blue);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(15, 98, 254, 0.4);
+            box-shadow: 0 4px 15px rgba(0, 109, 156, 0.4);
         }
 
         .btn-secondary {
@@ -310,7 +310,7 @@
         }
 
         .coming-soon-badge {
-            background: linear-gradient(135deg, #6929c4 0%, #9f1853 100%);
+            background: #525252;
             color: white;
             padding: 8px 20px;
             border-radius: 20px;
@@ -392,7 +392,7 @@
             <div class="navbar-right">
                 <!-- Profile Dropdown -->
                 <div class="profile-dropdown" id="profile-dropdown">
-                    <button class="profile-btn" onclick="toggleProfileMenu()" title="Profile">
+                    <button class="profile-btn" onclick="toggleProfileMenu()" title="Profile" type="button">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
                             <path
                                 d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z">
@@ -436,20 +436,7 @@
                             </svg>
                             API Keys
                         </a>
-                        <div class="profile-menu-item theme-toggle">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                                    <path
-                                        d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z">
-                                    </path>
-                                </svg>
-                                Dark Mode
-                            </div>
-                            <label class="theme-switch">
-                                <input type="checkbox" id="theme-checkbox">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+
                         <div class="profile-menu-divider"></div>
                         <a href="#" class="profile-menu-item logout" onclick="handleLogout()">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from groq import Groq
 import os
@@ -269,8 +269,11 @@ Use the following information to help answer the user's question. If the informa
             # Save messages to database for analytics
             session_id = request.session_id
             if session_id:
-                database.add_chat_message(session_id, "user", request.message)
-                database.add_chat_message(session_id, "assistant", assistant_response)
+                try:
+                    database.add_chat_message(session_id, "user", request.message)
+                    database.add_chat_message(session_id, "assistant", assistant_response)
+                except Exception as e:
+                    print(f"DB Save Error: {e}")
             
             return {
                 "response": assistant_response,
@@ -288,8 +291,11 @@ Use the following information to help answer the user's question. If the informa
             # Save messages to database for analytics
             session_id = request.session_id
             if session_id:
-                database.add_chat_message(session_id, "user", request.message)
-                database.add_chat_message(session_id, "assistant", assistant_response)
+                try:
+                    database.add_chat_message(session_id, "user", request.message)
+                    database.add_chat_message(session_id, "assistant", assistant_response)
+                except Exception as e:
+                    print(f"DB Save Error: {e}")
             
             return {
                 "response": assistant_response,
@@ -302,6 +308,227 @@ Use the following information to help answer the user's question. If the informa
         print(f"Error: {e}")
         monitoring.monitor.log_event("ERROR", f"Chat error for agent {request.agent_id}: {e}", metadata={"agent_id": request.agent_id, "model": request.model, "user_message": request.message})
         raise HTTPException(status_code=500, detail=str(e))
+
+
+async def stream_chat_generator(request: ChatRequest):
+    """Generator for streaming chat responses."""
+    if not GROQ_API_KEY:
+        yield f"data: {json.dumps({'type': 'error', 'content': 'GROQ_API_KEY not found'})}\n\n"
+        return
+
+    # Create or retrieve session
+    session_id = request.session_id
+    if not session_id:
+        session_result = database.create_chat_session(request.agent_id, "New Chat")
+        session_id = session_result.get("id") if isinstance(session_result, dict) else session_result
+        yield f"data: {json.dumps({'type': 'session_id', 'content': session_id})}\n\n"
+    
+    # Update session title if it's the first message
+    # (Simple logic: if history is empty, update title with first few words)
+    if not request.history and session_id:
+        new_title = request.message[:30] + "..." if len(request.message) > 30 else request.message
+        try:
+            database.update_session_title(session_id, new_title)
+        except Exception as e:
+            print(f"Failed to update session title: {e}")
+
+    # --- RAG: Retrieve relevant context ---
+    rag_context = ""
+    sources = []
+    
+    if request.use_rag:
+        try:
+            # Check if agent has any documents first
+            doc_stats = vector_store.list_documents(request.agent_id)
+            
+            if doc_stats:
+                # 1. Intent Detection: Check if the query actually needs knowledge base
+                # We use a very fast/cheap call or simple heuristics. 
+                # For now, let's use a simple heuristic: length > 3 words OR specific keywords
+                # A better approach would be a small LLM call, but let's keep it fast.
+                
+                # Heuristic: Greetings and short phatic expressions don't need RAG
+                is_greeting = request.message.lower().strip() in ['hi', 'hello', 'hey', 'greetings', 'good morning', 'good evening', 'thanks', 'thank you']
+                
+                if not is_greeting:
+                    # Only show "Searching..." if we are actually searching
+                    yield f"data: {json.dumps({'type': 'status', 'content': 'Searching knowledge base...'})}\n\n"
+                    results = vector_store.search(request.agent_id, request.message, top_k=5)
+                    if results:
+                        context_parts = []
+                        for r in results:
+                            # Only include if score is relevant enough (e.g. < 1.0 distance for L2, or > 0.3 for Cosine)
+                            # Milvus Lite Cosine similarity: 1.0 is identical, 0.0 is orthogonal
+                            if r["score"] > 0.3: 
+                                context_parts.append(r["text"])
+                                sources.append({
+                                    "document_id": r["document_id"],
+                                    "score": round(r["score"], 3),
+                                    "metadata": r["metadata"]
+                                })
+                        
+                        if context_parts:
+                            rag_context = "\n\n".join(context_parts)
+                            yield f"data: {json.dumps({'type': 'sources', 'content': sources})}\n\n"
+                        else:
+                             yield f"data: {json.dumps({'type': 'status', 'content': 'No relevant info found in KB.'})}\n\n"
+
+        except Exception as e:
+            print(f"⚠️ RAG search error: {e}")
+    
+    # Build system prompt
+    enhanced_prompt = request.system_prompt
+    if rag_context:
+        enhanced_prompt += f"\n\n---\nKNOWLEDGE BASE CONTEXT:\n{rag_context}\n---\n"
+
+    # Prepare messages
+    messages = [{"role": "system", "content": enhanced_prompt}]
+    for msg in request.history:
+        m = {"role": msg.role, "content": msg.content}
+        if msg.tool_calls: m["tool_calls"] = msg.tool_calls
+        if msg.tool_call_id: m["tool_call_id"] = msg.tool_call_id
+        if msg.name: m["name"] = msg.name
+        messages.append(m)
+        
+    messages.append({"role": "user", "content": request.message})
+
+    try:
+        # Filter tools based on agent configuration
+        agent_tools = []
+        if mcp_tools:
+            # Get agent's enabled tools from DB
+            agent = database.get_agent(request.agent_id)
+            if agent and agent.get("tools"):
+                try:
+                    tools_data = agent["tools"]
+                    # Handle both string (JSON) and list types
+                    if isinstance(tools_data, str):
+                        enabled_tool_names = json.loads(tools_data)
+                    elif isinstance(tools_data, list):
+                        enabled_tool_names = tools_data
+                    else:
+                        enabled_tool_names = []
+                    agent_tools = [t for t in mcp_tools if t["function"]["name"] in enabled_tool_names]
+                except (json.JSONDecodeError, TypeError) as e:
+                    print(f"Error decoding tools for agent {request.agent_id}: {e}")
+
+        # 1. Stream from LLM
+        stream = client.chat.completions.create(
+            model=request.model,
+            messages=messages,
+            tools=agent_tools if agent_tools else None,
+            tool_choice="auto",
+            temperature=0.7,
+            max_tokens=1024,
+            stream=True
+        )
+
+        tool_calls = []
+        current_content = ""
+
+        for chunk in stream:
+            delta = chunk.choices[0].delta
+            
+            # Handle Content
+            if delta.content:
+                current_content += delta.content
+                yield f"data: {json.dumps({'type': 'token', 'content': delta.content})}\n\n"
+            
+            # Handle Tool Calls (Accumulate)
+            if delta.tool_calls:
+                for tc in delta.tool_calls:
+                    if len(tool_calls) <= tc.index:
+                        tool_calls.append({"id": "", "function": {"name": "", "arguments": ""}})
+                    
+                    if tc.id: tool_calls[tc.index]["id"] += tc.id
+                    if tc.function.name: tool_calls[tc.index]["function"]["name"] += tc.function.name
+                    if tc.function.arguments: tool_calls[tc.index]["function"]["arguments"] += tc.function.arguments
+
+        # 2. Process Tool Calls if any
+        if tool_calls:
+            # Reconstruct the message object for history
+            assistant_msg = {
+                "role": "assistant",
+                "content": current_content,
+                "tool_calls": [
+                    {
+                        "id": tc["id"],
+                        "type": "function",
+                        "function": tc["function"]
+                    } for tc in tool_calls
+                ]
+            }
+            messages.append(assistant_msg)
+            
+            for tc in tool_calls:
+                func_name = tc["function"]["name"]
+                func_args_str = tc["function"]["arguments"]
+                
+                yield f"data: {json.dumps({'type': 'status', 'content': f'Using tool: {func_name}'})}\n\n"
+                
+                try:
+                    func_args = json.loads(func_args_str)
+                    
+                    # Call MCP
+                    if mcp_session:
+                        result = await mcp_session.call_tool(func_name, arguments=func_args)
+                        tool_output = result.content[0].text
+                    else:
+                        tool_output = "Error: MCP Session not active."
+                        
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tc["id"],
+                        "name": func_name,
+                        "content": tool_output
+                    })
+                    
+                except Exception as e:
+                    print(f"Tool execution error: {e}")
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tc["id"],
+                        "name": func_name,
+                        "content": f"Error: {str(e)}"
+                    })
+
+            # 3. Second Stream (Post-Tool)
+            stream2 = client.chat.completions.create(
+                model=request.model,
+                messages=messages,
+                stream=True
+            )
+            
+            final_content = ""
+            for chunk in stream2:
+                delta = chunk.choices[0].delta
+                if delta.content:
+                    final_content += delta.content
+                    yield f"data: {json.dumps({'type': 'token', 'content': delta.content})}\n\n"
+            
+            current_content = final_content # For saving to DB
+
+        # Save to DB
+        try:
+            # Save User Message
+            database.add_chat_message(session_id, "user", request.message)
+            
+            # Save Assistant Message
+            database.add_chat_message(session_id, "assistant", current_content)
+            
+        except Exception as e:
+            print(f"DB Save Error: {e}")
+            
+        yield f"data: {json.dumps({'type': 'done', 'session_id': session_id})}\n\n"
+
+    except Exception as e:
+        print(f"Stream error: {e}")
+        yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+
+
+@app.post("/chat/stream")
+async def chat_stream(request: ChatRequest):
+    return StreamingResponse(stream_chat_generator(request), media_type="text/event-stream")
 
 
 # --- Document Upload Endpoints ---
@@ -386,6 +613,9 @@ async def list_documents(agent_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
+
+
 @app.delete("/documents/{agent_id}/{document_id}")
 async def delete_document(agent_id: str, document_id: str):
     """Delete a document from an agent's knowledge base."""
@@ -413,12 +643,17 @@ class AgentCreate(BaseModel):
     description: str = ""
     system_prompt: str = "You are a helpful AI assistant."
     model: str = "llama-3.3-70b-versatile" # Default model
+    tools: List[str] = []
 
 class AgentUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     system_prompt: Optional[str] = None
     model: Optional[str] = None
+    tools: Optional[List[str]] = None
+
+class AgentToolsUpdate(BaseModel):
+    tools: List[str]
 
 
 @app.get("/agents")
@@ -439,7 +674,8 @@ async def create_agent(agent: AgentCreate):
             "name": agent.name,
             "description": agent.description,
             "system_prompt": agent.system_prompt,
-            "model": agent.model
+            "model": agent.model,
+            "tools": agent.tools
         }
         database.save_agent(agent_data)
         logger.info(f"Created agent: {agent_id}")
@@ -471,6 +707,19 @@ async def update_agent(agent_id: str, agent: AgentUpdate):
     updates = {k: v for k, v in agent.dict().items() if v is not None}
     updated = database.update_agent(agent_id, **updates)
     logger.info(f"Updated agent: {agent_id}")
+    return {"success": True, "agent": updated}
+
+
+@app.put("/agents/{agent_id}/tools")
+async def update_agent_tools(agent_id: str, update: AgentToolsUpdate):
+    """Update the list of tools for an agent."""
+    existing = database.get_agent(agent_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    updated = database.update_agent(agent_id, tools=update.tools)
+    logger.info(f"Updated tools for agent {agent_id}: {update.tools}")
+    
     return {"success": True, "agent": updated}
 
 

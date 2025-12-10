@@ -235,6 +235,9 @@ def list_documents(agent_id: str) -> List[Dict[str, Any]]:
     return documents
 
 
+
+
+
 def get_stats() -> Dict[str, Any]:
     """Get collection statistics."""
     client = get_client()

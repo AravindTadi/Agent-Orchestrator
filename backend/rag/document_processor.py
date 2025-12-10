@@ -169,28 +169,48 @@ def process_url(url: str) -> Tuple[List[str], Dict[str, Any]]:
     """Process a web URL - extracts main content."""
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.text, 'html.parser')
         
+        # Get title
+        title = soup.title.string.strip() if soup.title else url
+        
+        # Get meta description
+        meta_desc = ""
+        meta_tag = soup.find('meta', attrs={'name': 'description'}) or soup.find('meta', attrs={'property': 'og:description'})
+        if meta_tag:
+            meta_desc = meta_tag.get('content', '').strip()
+
         # Remove script and style elements
-        for script in soup(["script", "style", "nav", "footer", "header"]):
+        for script in soup(["script", "style", "noscript", "iframe", "svg"]):
             script.decompose()
         
         # Get text
-        text = soup.get_text(separator='\n')
+        # Use get_text with separator to preserve some structure
+        text = soup.get_text(separator='\n\n')
         
         # Clean up whitespace
         lines = [line.strip() for line in text.splitlines() if line.strip()]
-        text = '\n'.join(lines)
+        cleaned_text = '\n'.join(lines)
         
-        chunks = chunk_text(text)
+        # If text is too short, try to use meta description
+        if len(cleaned_text) < 100 and meta_desc:
+            cleaned_text = f"{title}\n\n{meta_desc}\n\n{cleaned_text}"
+        elif meta_desc:
+             # Prepend title and description for better context
+            cleaned_text = f"Title: {title}\nDescription: {meta_desc}\n\n{cleaned_text}"
+        else:
+            cleaned_text = f"Title: {title}\n\n{cleaned_text}"
+
+        chunks = chunk_text(cleaned_text)
         
-        # Try to get title
-        title = soup.title.string if soup.title else url
+        # If still no chunks, create at least one from title/url to avoid empty errors
+        if not chunks:
+            chunks = [f"Title: {title}\nURL: {url}\n(No readable content found)"]
         
         metadata = {
             "url": url,

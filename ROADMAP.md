@@ -140,14 +140,13 @@ AgentHub is an enterprise-ready AI agent orchestration platform that can be depl
 4. **Google OAuth** - SSO login
 5. **RBAC Foundations** - Admin/User roles
 6. **API Documentation Page** - Interactive API explorer
-7. **Chat History UI** - Sidebar with past sessions
+7. **Chat History UI** - Sidebar with past sessions (Done - Basic UI)
+8. **Advanced RAG Intent Detection** - Use LLM for smarter query classification
+9. **Load & Resume Chat Sessions** - Click on history item to load full conversation (requires DB storage optimization)
 
 ### Lower Priority (Future)
-8. Billing Integration (Stripe)
-9. Admin Dashboard
-10. Agent Workflows
-11. Webhook Support
-12. SDKs (Python, JavaScript)
+10. SDKs (Python, JavaScript)
+11. **User Preferences Sync** - Sync UI preferences (theme, last selected agent) across devices via server
 
 ---
 

@@ -6,6 +6,19 @@ let agents = {};
 let currentAgentId = null;
 let chatHistory = [];
 
+// Tool Metadata
+const TOOL_METADATA = {
+    'aws_s3': { name: 'AWS S3', desc: 'Object Storage', icon: 'S3' },
+    'aws_lambda': { name: 'AWS Lambda', desc: 'Serverless Functions', icon: 'λ' },
+    'aws_ec2': { name: 'AWS EC2', desc: 'Virtual Machines', icon: 'EC2' },
+    'web_fetch': { name: 'Web Fetch', desc: 'HTTP Requests', icon: 'GET' },
+    'web_scraper': { name: 'Web Scraper', desc: 'HTML Extraction', icon: 'Web' },
+    'file_reader': { name: 'File Reader', desc: 'Read Local Files', icon: 'File' },
+    'database': { name: 'Database', desc: 'SQL Query', icon: 'DB' },
+    'code_executor': { name: 'Code Executor', desc: 'Python Runtime', icon: 'Py' },
+    'calculator': { name: 'Calculator', desc: 'Math Operations', icon: '∑' }
+};
+
 function toggleSidebar() {
     document.getElementById('main-nav').classList.toggle('open');
     document.getElementById('sidebar-overlay').classList.toggle('show');
@@ -198,6 +211,137 @@ function selectAgent(id) {
 
     // Load Knowledge Base documents
     loadDocuments();
+
+    // Render Tools
+    renderToolList(agent);
+}
+
+function renderToolList(agent) {
+    const list = document.getElementById('tool-list');
+    if (!list) return;
+
+    list.innerHTML = '';
+    const tools = agent.tools || [];
+
+    if (tools.length === 0) {
+        list.innerHTML = '<p class="hint">No tools enabled. Click "Add tool" to enable tools.</p>';
+        return;
+    }
+
+    tools.forEach(toolId => {
+        const meta = TOOL_METADATA[toolId] || { name: toolId, desc: 'Custom Tool', icon: '?' };
+        const item = document.createElement('div');
+        item.className = 'tool-item';
+        item.innerHTML = `
+            <div class="tool-item-icon">${meta.icon}</div>
+            <div class="tool-item-info">
+                <span class="tool-item-name">${meta.name}</span>
+                <span class="tool-item-desc">${meta.desc}</span>
+            </div>
+            <button class="tool-item-menu" onclick="removeTool('${toolId}')" title="Remove Tool">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+            </button>
+        `;
+        list.appendChild(item);
+    });
+}
+
+async function removeTool(toolId) {
+    if (!currentAgentId || !confirm('Remove this tool?')) return;
+
+    const agent = agents[currentAgentId];
+    const currentTools = agent.tools || [];
+    const newTools = currentTools.filter(t => t !== toolId);
+
+    try {
+        const response = await fetch(`${API_BASE}/agents/${currentAgentId}/tools`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tools: newTools })
+        });
+
+        if (response.ok) {
+            agent.tools = newTools; // Update local state
+            renderToolList(agent);
+            showToast('Tool removed');
+        } else {
+            showToast('Failed to remove tool');
+        }
+    } catch (error) {
+        console.error('Error removing tool:', error);
+        showToast('Error removing tool');
+    }
+}
+
+function openAddToolModal() {
+    const modal = document.getElementById('add-tool-modal');
+    const list = document.getElementById('available-tools-list');
+    if (!modal || !list) return;
+
+    list.innerHTML = '';
+    const agent = agents[currentAgentId];
+    const currentTools = new Set(agent.tools || []);
+
+    // Filter available tools
+    const availableTools = Object.keys(TOOL_METADATA).filter(t => !currentTools.has(t));
+
+    if (availableTools.length === 0) {
+        list.innerHTML = '<p class="hint">All available tools are already added.</p>';
+    } else {
+        availableTools.forEach(toolId => {
+            const meta = TOOL_METADATA[toolId];
+            const item = document.createElement('div');
+            item.className = 'tool-item-modal';
+            item.innerHTML = `
+                <div class="tool-item-icon">${meta.icon}</div>
+                <div class="tool-item-info">
+                    <span class="tool-item-name">${meta.name}</span>
+                    <span class="tool-item-desc">${meta.desc}</span>
+                </div>
+                <button class="add-tool-btn" onclick="addToolToAgent('${toolId}')">
+                    Add
+                </button>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    modal.classList.add('show');
+}
+
+function closeAddToolModal(event) {
+    if (event && event.target !== event.currentTarget && !event.target.classList.contains('modal-close')) return;
+    document.getElementById('add-tool-modal').classList.remove('show');
+}
+
+async function addToolToAgent(toolId) {
+    if (!currentAgentId) return;
+
+    const agent = agents[currentAgentId];
+    const currentTools = agent.tools || [];
+    const newTools = [...currentTools, toolId];
+
+    try {
+        const response = await fetch(`${API_BASE}/agents/${currentAgentId}/tools`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tools: newTools })
+        });
+
+        if (response.ok) {
+            agent.tools = newTools; // Update local state
+            renderToolList(agent);
+            closeAddToolModal();
+            showToast('Tool added successfully');
+        } else {
+            showToast('Failed to add tool');
+        }
+    } catch (error) {
+        console.error('Error adding tool:', error);
+        showToast('Error adding tool');
+    }
 }
 
 function checkNameLimit(input) {
@@ -414,9 +558,6 @@ function handleKeyPress(event) {
     if (event.key === 'Enter') sendMessage();
 }
 
-// Current chat session ID for analytics tracking
-let currentSessionId = null;
-
 // Create a new chat session
 async function createChatSession(agentId) {
     try {
@@ -456,32 +597,104 @@ async function sendMessage() {
     sendBtn.disabled = true;
 
     try {
-        // Create session if doesn't exist (for analytics tracking)
+        // Create session if doesn't exist
         if (!currentSessionId) {
             currentSessionId = await createChatSession(currentAgentId);
         }
 
-        // Send to Backend
-        // Note: We send the CURRENT config, so dynamic changes work immediately
-        const response = await fetch('http://localhost:8000/chat', {
+        // Create a placeholder message for the assistant
+        const assistantMsgId = addMessage('assistant', '', null, null, true); // true = isStreaming
+        const msgDiv = document.getElementById(assistantMsgId);
+        msgDiv.classList.add('streaming');
+
+        const msgContentEl = msgDiv.querySelector('.message-text');
+        const reasoningContentEl = msgDiv.querySelector('.reasoning-content');
+        const sourcesContainerEl = msgDiv.querySelector('.sources-container'); // Need to add this container in addMessage
+
+        // Call Streaming Endpoint
+        const agent = agents[currentAgentId] || {};
+        const response = await fetch(`${API_BASE}/chat/stream`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 agent_id: currentAgentId,
-                system_prompt: agents[currentAgentId].system_prompt, // Send dynamic prompt
-                model: model, // Send selected model
+                system_prompt: agent.system_prompt || "You are a helpful AI assistant.",
+                model: model,
                 message: message,
-                history: chatHistory, // This now includes the latest user message added by addMessage
-                session_id: currentSessionId // Track for analytics
+                history: chatHistory,
+                session_id: currentSessionId,
+                use_rag: true // Always use RAG if available
             })
         });
 
-        if (!response.ok) throw new Error('Network error');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullResponse = "";
+        let fullReasoning = "";
 
-        const data = await response.json();
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-        // Add Assistant Message (with reasoning and sources if available)
-        addMessage('assistant', data.response, data.reasoning, data.sources);
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n\n');
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.substring(6));
+
+                        if (data.type === 'token') {
+                            fullResponse += data.content;
+                            // Use requestAnimationFrame for smoother updates
+                            requestAnimationFrame(() => {
+                                msgContentEl.innerText = fullResponse;
+                                // Auto-scroll
+                                const chatHistoryEl = document.getElementById('chat-history');
+                                chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+                            });
+                        }
+                        else if (data.type === 'status') {
+                            // Show status (e.g. "Thinking...", "Using tool...")
+                            // We can append this to reasoning or a status bar
+                            fullReasoning += `> ${data.content}\n`;
+                            if (reasoningContentEl) {
+                                reasoningContentEl.style.display = 'block';
+                                reasoningContentEl.innerText = fullReasoning;
+                            }
+                        }
+                        else if (data.type === 'sources') {
+                            // Render sources
+                            if (sourcesContainerEl) {
+                                const pills = data.content.map(s => {
+                                    const name = s.metadata?.filename || s.metadata?.title || s.document_id;
+                                    return `<span class="source-pill" title="Score: ${s.score}">${name}</span>`;
+                                }).join('');
+                                sourcesContainerEl.innerHTML = `<span class="sources-label">Sources:</span>${pills}`;
+                            }
+                        }
+                        else if (data.type === 'session_id') {
+                            // Capture new session ID
+                            currentSessionId = data.content;
+                            // Refresh list to show new session
+                            loadChatSessions();
+                        }
+                        else if (data.type === 'error') {
+                            fullResponse += `\n[Error: ${data.content}]`;
+                            msgContentEl.innerText = fullResponse;
+                        }
+                    } catch (e) {
+                        console.error("Error parsing stream:", e);
+                    }
+                }
+            }
+        }
+
+        msgDiv.classList.remove('streaming');
+
+        // Update history
+        chatHistory.push({ role: 'user', content: message });
+        chatHistory.push({ role: 'assistant', content: fullResponse, reasoning: fullReasoning });
 
     } catch (error) {
         console.error(error);
@@ -492,12 +705,14 @@ async function sendMessage() {
     }
 }
 
-function addMessage(role, text, reasoning = null, sources = null) {
+function addMessage(role, text, reasoning = null, sources = null, isStreaming = false) {
     const chatHistoryEl = document.getElementById('chat-history');
     const emptyState = chatHistoryEl.querySelector('.empty-state');
     if (emptyState) emptyState.remove();
 
+    const msgId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const msgDiv = document.createElement('div');
+    msgDiv.id = msgId;
     msgDiv.className = `message ${role}`;
 
     if (role === 'user') {
@@ -509,22 +724,24 @@ function addMessage(role, text, reasoning = null, sources = null) {
         const agentName = agents[currentAgentId]?.name || "Agent";
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        const hasReasoning = reasoning && reasoning.length > 0;
-        const hasSources = sources && sources.length > 0;
+        const hasReasoning = (reasoning && reasoning.length > 0) || isStreaming;
+        const hasSources = (sources && sources.length > 0) || isStreaming;
 
         // Build sources HTML
         let sourcesHtml = '';
-        if (hasSources) {
+        if (sources && sources.length > 0) {
             const pills = sources.map(s => {
                 const name = s.metadata?.filename || s.metadata?.title || s.document_id;
                 return `<span class="source-pill" title="Score: ${s.score}">${name}</span>`;
             }).join('');
             sourcesHtml = `
-                <div class="sources-section">
+                <div class="sources-container">
                     <span class="sources-label">Sources:</span>
                     ${pills}
                 </div>
             `;
+        } else if (isStreaming) {
+            sourcesHtml = `<div class="sources-container"></div>`;
         }
 
         msgDiv.innerHTML = `
@@ -546,8 +763,8 @@ function addMessage(role, text, reasoning = null, sources = null) {
                         </button>
                     ` : ''}
                 </div>
+                ${hasReasoning ? `<div class="reasoning-content" style="display: ${isStreaming ? 'block' : 'none'}">${reasoning || ''}</div>` : ''}
                 <div class="message-text">${text}</div>
-                ${hasReasoning ? `<div class="reasoning-content">${reasoning}</div>` : ''}
                 ${sourcesHtml}
             </div>
         `;
@@ -556,8 +773,7 @@ function addMessage(role, text, reasoning = null, sources = null) {
     chatHistoryEl.appendChild(msgDiv);
     chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
 
-    // Add to history
-    chatHistory.push({ role, content: text, reasoning });
+    return msgId;
 }
 
 function toggleReasoning(btn) {
@@ -592,35 +808,40 @@ async function loadDocuments() {
 }
 
 function renderDocumentList(documents) {
-    const list = document.getElementById('document-list');
-    if (!list) return;
+    const docList = document.getElementById('document-list');
+    const docCount = document.getElementById('doc-count');
 
-    if (documents.length === 0) {
-        list.innerHTML = '<p class="hint" style="text-align:center;">No documents yet. Upload files or add URLs.</p>';
-        return;
-    }
+    docList.innerHTML = '';
+    docCount.innerText = `${documents.length} documents`;
 
-    list.innerHTML = documents.map(doc => {
+    documents.forEach(doc => {
         const meta = doc.metadata || {};
-        const icon = getIconForType(meta.type);
-        const name = meta.filename || meta.title || meta.url || doc.document_id;
-        const info = meta.chunks ? `${meta.chunks} chunks` : '';
+        const name = meta.filename || meta.title || doc.document_id;
+        const type = meta.type || 'unknown';
+        const chunks = meta.chunks || 0;
 
-        return `
-            <div class="document-item" data-id="${doc.document_id}">
-                <div class="document-info">
-                    <span class="document-icon">${icon}</span>
-                    <span class="document-name" title="${name}">${name}</span>
-                    <span class="document-meta">${info}</span>
+        // Icon based on type
+        let icon = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>';
+        if (type === 'web') {
+            icon = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>';
+        }
+
+        const item = document.createElement('div');
+        item.className = 'document-item';
+        item.innerHTML = `
+                <div class="doc-icon">${icon}</div>
+                <div class="doc-info">
+                    <span class="doc-name" title="${name}">${name}</span>
+                    <span class="doc-meta">${type.toUpperCase()} • ${chunks} chunks</span>
                 </div>
-                <button class="delete-doc-btn" onclick="deleteDocument('${doc.document_id}', event)" title="Delete" type="button">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path>
+                <button class="delete-doc-btn" onclick="deleteDocument('${doc.document_id}', event)">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                     </svg>
                 </button>
-            </div>
-        `;
-    }).join('');
+            `;
+        docList.appendChild(item);
+    });
 }
 
 function getIconForType(type) {
@@ -1157,6 +1378,136 @@ async function loadUserInfo() {
 // Open Settings page (Integrations)
 function openSettingsPage() {
     window.location.href = 'integrations.html';
+}
+
+// Switch Config Tabs (IBM Watsonx Style)
+function switchConfigTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.config-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabName);
+    });
+
+    // Scroll to section
+    const section = document.getElementById(`tab-${tabName}`);
+    if (section) {
+        // Scroll the section into view within the container
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// Open Tools Library page
+function openToolsPage() {
+    if (currentAgentId) {
+        window.location.href = `tools.html?agent=${currentAgentId}`;
+    } else {
+        showToast('Please select an agent first');
+    }
+}
+
+// ==================== Chat History Sidebar ====================
+
+let currentSessionId = null;
+
+async function loadChatSessions() {
+    if (!currentAgentId) return;
+
+    try {
+        const token = localStorage.getItem('auth_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        const response = await fetch(`${API_BASE}/chat/sessions?agent_id=${currentAgentId}`, { headers });
+        if (response.ok) {
+            const data = await response.json();
+            renderSessionList(data.sessions);
+        }
+    } catch (error) {
+        console.error('Failed to load sessions:', error);
+    }
+}
+
+function renderSessionList(sessions) {
+    const list = document.getElementById('session-list');
+    if (!list) return;
+
+    list.innerHTML = '';
+
+    // Filter out sessions with default "New Chat" title (no actual conversation)
+    const filteredSessions = sessions.filter(s => s.title && s.title !== 'New Chat');
+
+    if (filteredSessions.length === 0) {
+        list.innerHTML = '<p style="text-align:center; color:var(--text-secondary); font-size:0.8rem; margin-top:20px;">No history yet</p>';
+        return;
+    }
+
+    filteredSessions.forEach(session => {
+        const item = document.createElement('div');
+        item.className = `chat-session-item ${currentSessionId === session.session_id ? 'active' : ''}`;
+        item.onclick = () => loadSession(session.session_id);
+
+        const dateObj = new Date(session.created_at);
+        const date = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        const time = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        const title = session.title;
+
+        item.innerHTML = `
+            <div class="chat-session-title">${title}</div>
+            <div class="chat-session-meta">
+                <span class="chat-session-date">${date} • ${time}</span>
+            </div>
+        `;
+        list.appendChild(item);
+    });
+}
+
+async function loadSession(sessionId) {
+    currentSessionId = sessionId;
+
+    // Update UI active state
+    document.querySelectorAll('.chat-session-item').forEach(el => el.classList.remove('active'));
+    // Re-render to set active class properly or just find the element
+    // For simplicity, we'll reload the list or just set active class if we had references
+    // But let's just fetch messages first
+
+    try {
+        const token = localStorage.getItem('auth_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        const response = await fetch(`${API_BASE}/chat/sessions/${sessionId}`, { headers });
+        if (response.ok) {
+            const data = await response.json();
+
+            // Clear current chat
+            const chatHistoryEl = document.getElementById('chat-history');
+            chatHistoryEl.innerHTML = '';
+
+            // Render messages
+            data.messages.forEach(msg => {
+                addMessage(msg.role, msg.content, false); // false = not streaming
+            });
+
+            // Scroll to bottom
+            chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+        }
+    } catch (error) {
+        console.error('Failed to load session:', error);
+        showToast('Failed to load chat history');
+    }
+}
+
+function startNewChat() {
+    currentSessionId = null;
+    const chatHistoryEl = document.getElementById('chat-history');
+    if (chatHistoryEl) {
+        chatHistoryEl.innerHTML = `
+            <div class="empty-state">
+                <div class="agent-avatar-large">${agents[currentAgentId]?.name.charAt(0).toUpperCase() || 'A'}</div>
+                <h3>Chat with ${agents[currentAgentId]?.name || 'Agent'}</h3>
+                <p>${agents[currentAgentId]?.description || 'Ready to help you.'}</p>
+            </div>
+        `;
+    }
+    // Refresh session list to remove active state
+    loadChatSessions();
 }
 
 // Open Region Selector Modal
