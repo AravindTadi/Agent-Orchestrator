@@ -4,270 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skill Catalog - AgentHub</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap"
+    <title>Tools - AgentHub</title>
+    <link rel="stylesheet" href="css/style.css?v=watsonx">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
         rel="stylesheet">
-    <style>
-        /* Skill Catalog Specific Styles */
-        .catalog-container {
-            padding: 2rem 3rem;
-            max-width: 1600px;
-            margin: 0 auto;
-            height: calc(100vh - 60px);
-            overflow-y: auto;
-            background-color: var(--bg-color);
-        }
-
-        .catalog-header {
-            margin-bottom: 2rem;
-        }
-
-        .catalog-header h1 {
-            font-size: 2rem;
-            font-weight: 400;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .catalog-header p {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-        }
-
-        /* Search Bar */
-        .search-section {
-            margin-bottom: 3rem;
-        }
-
-        .search-box {
-            position: relative;
-            max-width: 800px;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 16px 16px 16px 48px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            /* IBM style is often sharper or slightly rounded */
-            background: var(--surface-color);
-            font-size: 1rem;
-            color: var(--text-primary);
-            transition: all 0.2s;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 2px rgba(0, 109, 156, 0.1);
-        }
-
-        .search-box svg {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-        }
-
-        /* Section Headers */
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 500;
-            color: var(--text-primary);
-            margin-bottom: 1.5rem;
-        }
-
-        /* Suggested Skills Grid */
-        .suggested-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-
-        .skill-card {
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            padding: 1.5rem;
-            border-radius: 8px;
-            /* Slightly rounded */
-            display: flex;
-            flex-direction: column;
-            transition: all 0.2s;
-            height: 100%;
-            position: relative;
-        }
-
-        .skill-card:hover {
-            border-color: var(--primary-blue);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        .skill-header {
-            margin-bottom: 1rem;
-        }
-
-        .skill-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-            display: block;
-        }
-
-        .skill-desc {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            margin-bottom: 1.5rem;
-            flex-grow: 1;
-        }
-
-        .skill-icons {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 1.5rem;
-        }
-
-        .app-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--input-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .add-skill-btn {
-            align-self: flex-end;
-            background: transparent;
-            border: none;
-            color: var(--primary-blue);
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 8px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: color 0.2s;
-        }
-
-        .add-skill-btn:hover {
-            color: var(--primary-hover);
-            text-decoration: underline;
-        }
-
-        /* All Apps Grid */
-        .apps-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 1rem;
-        }
-
-        .app-card {
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            padding: 1rem;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .app-card:hover {
-            border-color: var(--primary-blue);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .app-card-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            background: var(--input-bg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-        }
-
-        .app-card-info {
-            flex: 1;
-        }
-
-        .app-card-name {
-            display: block;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .app-card-count {
-            display: block;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        .app-add-action {
-            color: var(--primary-blue);
-            font-size: 0.85rem;
-            font-weight: 500;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        .app-card:hover .app-add-action {
-            opacity: 1;
-        }
-
-        /* Back Button */
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--primary-blue);
-            text-decoration: none;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            cursor: pointer;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        .toast.show {
-            opacity: 1;
-        }
-    </style>
 </head>
 
 <body>
@@ -283,6 +23,12 @@
                 </a>
                 <a href="chat.html" class="nav-item">
                     Chat
+                </a>
+                <a href="connections.html" class="nav-item">
+                    Connections
+                </a>
+                <a href="tools.html" class="nav-item active">
+                    Tools
                 </a>
                 <a href="analytics.html" class="nav-item">
                     Analytics
@@ -303,7 +49,7 @@
                     <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
                 </svg>
             </button>
-            <div class="navbar-title">Skill Catalog</div>
+            <div class="navbar-title">Tools</div>
             <div class="navbar-right">
                 <div class="profile-dropdown" id="profile-dropdown">
                     <button class="profile-btn" onclick="toggleProfileMenu()" title="Profile" type="button">
@@ -313,150 +59,845 @@
                             </path>
                         </svg>
                     </button>
-                    <!-- Profile Menu (same as other pages) -->
-                    <div class="profile-menu" id="profile-menu">
-                        <!-- ... (Standard Profile Menu Content) ... -->
-                        <div class="profile-menu-header">
-                            <div class="profile-avatar">
-                                <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
-                                    <path
-                                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z">
-                                    </path>
-                                </svg>
-                            </div>
-                            <div class="profile-info">
-                                <span class="profile-name" id="profile-name">Guest User</span>
-                                <span class="profile-email" id="profile-email">Not logged in</span>
-                            </div>
-                        </div>
-                        <div class="profile-menu-divider"></div>
-                        <a href="#" class="profile-menu-item logout" onclick="handleLogout()">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                                <path
-                                    d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
-                            </svg>
-                            Logout
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
-            <div class="catalog-container">
-                <a href="#" class="back-link" onclick="history.back()">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+            <div class="tools-page">
+                <!-- Page Header -->
+                <div class="page-title-section">
+                    <h1>Tools Catalog</h1>
+                    <p class="page-subtitle">Tools are grouped by app. Select a tool to add to your agents.</p>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path
+                            d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
                     </svg>
-                    Back
-                </a>
-
-                <div class="catalog-header">
-                    <h1>Skill catalog</h1>
-                    <p>Skills are grouped by app. Select an app to see all the skills that use that app.</p>
+                    <input type="text" id="tool-search"
+                        placeholder="Search for a tool by name or by the name of the app..." oninput="filterTools()">
                 </div>
 
-                <div class="search-section">
-                    <div class="search-box">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                            <path
-                                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
-                        </svg>
-                        <input type="text" placeholder="Search for a skill by name or by the name of the app..."
-                            id="skill-search" oninput="filterSkills()">
+                <!-- Tools Section -->
+                <section class="content-section">
+                    <div class="section-title-row">
+                        <h2>Suggested tools</h2>
+                        <span class="count-badge" id="tool-count">0</span>
                     </div>
-                </div>
 
-                <h2 class="section-title">Suggested skills</h2>
-                <div class="suggested-grid" id="suggested-grid">
-                    <!-- Suggested items injected by JS -->
-                </div>
+                    <!-- Category Filter -->
+                    <div class="filter-pills" id="category-pills">
+                        <button class="filter-pill active" data-category="all"
+                            onclick="filterByCategory('all', this)">All</button>
+                    </div>
 
-                <h2 class="section-title">All apps</h2>
-                <div class="apps-grid" id="apps-grid">
-                    <!-- All apps injected by JS -->
-                </div>
+                    <div id="tools-grid" class="cards-grid">
+                        <div class="loading-indicator">Loading tools...</div>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="toast">Tool added successfully</div>
+    <!-- Tool Detail Modal -->
+    <div id="tool-modal" class="modal-overlay">
+        <div class="modal-box modal-lg">
+            <div class="modal-header">
+                <h2 id="tool-modal-title">Tool Details</h2>
+                <button class="close-btn" onclick="closeToolModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tool Header -->
+                <div class="tool-header-block">
+                    <div class="tool-icon" id="tool-modal-icon">🔧</div>
+                    <div class="tool-info">
+                        <h3 id="tool-modal-name">Tool Name</h3>
+                        <p id="tool-modal-desc">Tool description</p>
+                        <div class="tool-tags">
+                            <span class="tool-tag category" id="tool-modal-category">Category</span>
+                            <span class="tool-tag source" id="tool-modal-source">Source</span>
+                        </div>
+                    </div>
+                </div>
 
-    <script src="js/script.js?v=8"></script>
+                <!-- Connection Status -->
+                <div class="tool-section" id="tool-connection-section">
+                    <h4>Required Connection</h4>
+                    <div id="tool-connection-status"></div>
+                </div>
+
+                <!-- Parameters -->
+                <div class="tool-section">
+                    <h4>Parameters</h4>
+                    <div id="tool-parameters"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeToolModal()">Close</button>
+                <button type="button" class="btn-primary" id="add-tool-btn" onclick="addToolToAgent()">Add to
+                    Agent</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Inline script to handle page-specific logic
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Check if we have an agent ID
-            const urlParams = new URLSearchParams(window.location.search);
-            const agentId = urlParams.get('agent');
+        // Sidebar toggle function
+        function toggleSidebar() {
+            document.getElementById('main-nav').classList.toggle('open');
+            document.getElementById('sidebar-overlay').classList.toggle('show');
+        }
 
-            if (agentId) {
-                // We are in "Add Tool" mode for a specific agent
-                // Ensure agents are loaded
-                if (Object.keys(agents).length === 0) {
-                    await loadAgentsFromAPI();
-                }
-                currentAgentId = agentId;
-            }
+        const API_BASE = 'http://localhost:8000';
+        let allTools = [];
+        let connectionTypes = [];
+        let myConnections = [];
+        let currentCategory = 'all';
+        let selectedTool = null;
 
-            renderCatalog();
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTools();
+            loadConnections();
         });
 
-        function renderCatalog() {
-            const suggestedGrid = document.getElementById('suggested-grid');
-            const appsGrid = document.getElementById('apps-grid');
+        async function loadTools() {
+            try {
+                const response = await fetch(`${API_BASE}/tools/catalog`);
+                const data = await response.json();
 
-            // Suggested Skills (Curated list)
-            const suggested = [
-                { id: 'aws_s3', title: 'Manage S3 Buckets', desc: 'Create, list, and delete S3 buckets and objects.', icons: ['S3'] },
-                { id: 'web_scraper', title: 'Web Scraper', desc: 'Extract data from websites for analysis.', icons: ['Web'] },
-                { id: 'code_executor', title: 'Python Code Executor', desc: 'Run Python scripts to analyze data or perform calculations.', icons: ['Py'] },
-                { id: 'aws_lambda', title: 'Invoke Lambda', desc: 'Trigger serverless functions on AWS.', icons: ['λ'] }
-            ];
-
-            suggestedGrid.innerHTML = suggested.map(item => `
-                <div class="skill-card">
-                    <div class="skill-header">
-                        <span class="skill-title">${item.title}</span>
-                    </div>
-                    <div class="skill-icons">
-                        ${item.icons.map(icon => `<div class="app-icon">${icon}</div>`).join('')}
-                    </div>
-                    <p class="skill-desc">${item.desc}</p>
-                    <button class="add-skill-btn" onclick="addToolToAgent('${item.id}')">
-                        Add skill +
-                    </button>
-                </div>
-            `).join('');
-
-            // All Apps (From TOOL_METADATA)
-            const allApps = Object.entries(TOOL_METADATA).map(([id, meta]) => ({
-                id,
-                name: meta.name,
-                icon: meta.icon,
-                desc: meta.desc
-            }));
-
-            appsGrid.innerHTML = allApps.map(app => `
-                <div class="app-card" onclick="addToolToAgent('${app.id}')">
-                    <div class="app-card-icon">${app.icon}</div>
-                    <div class="app-card-info">
-                        <span class="app-card-name">${app.name}</span>
-                        <span class="app-card-count">1 skill</span>
-                    </div>
-                    <span class="app-add-action">Add +</span>
-                </div>
-            `).join('');
+                if (data.success) {
+                    allTools = data.tools;
+                    document.getElementById('tool-count').textContent = allTools.length;
+                    buildCategoryPills();
+                    renderTools();
+                }
+            } catch (error) {
+                console.error('Failed to load tools:', error);
+                document.getElementById('tools-grid').innerHTML =
+                    '<div class="empty-state">Failed to load tools. Is the backend running?</div>';
+            }
         }
 
-        function filterSkills() {
-            const query = document.getElementById('skill-search').value.toLowerCase();
-            // Implement filtering logic here if needed
-            // For now, simple console log
-            console.log("Filtering for:", query);
+        async function loadConnections() {
+            try {
+                const typesRes = await fetch(`${API_BASE}/connection-types`);
+                const typesData = await typesRes.json();
+                if (typesData.success) {
+                    connectionTypes = typesData.connection_types;
+                }
+
+                const token = localStorage.getItem('auth_token');
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+                const connRes = await fetch(`${API_BASE}/connections`, { headers });
+                const connData = await connRes.json();
+                if (connData.success) {
+                    myConnections = connData.connections;
+                }
+            } catch (error) {
+                console.error('Failed to load connections:', error);
+            }
+        }
+
+        function buildCategoryPills() {
+            const categories = [...new Set(allTools.map(t => t.category))];
+            const pillsContainer = document.getElementById('category-pills');
+
+            let html = '<button class="filter-pill active" data-category="all" onclick="filterByCategory(\'all\', this)">All</button>';
+
+            categories.forEach(cat => {
+                const label = cat.charAt(0).toUpperCase() + cat.slice(1);
+                html += `<button class="filter-pill" data-category="${cat}" onclick="filterByCategory('${cat}', this)">${label}</button>`;
+            });
+
+            pillsContainer.innerHTML = html;
+        }
+
+        function renderTools() {
+            const grid = document.getElementById('tools-grid');
+            const searchTerm = document.getElementById('tool-search').value.toLowerCase();
+
+            let filtered = allTools;
+
+            if (currentCategory !== 'all') {
+                filtered = filtered.filter(t => t.category === currentCategory);
+            }
+
+            if (searchTerm) {
+                filtered = filtered.filter(t =>
+                    t.name.toLowerCase().includes(searchTerm) ||
+                    t.description.toLowerCase().includes(searchTerm) ||
+                    t.category.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            document.getElementById('tool-count').textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="empty-state">No tools found</div>';
+                return;
+            }
+
+            grid.innerHTML = filtered.map(tool => {
+                const hasConnection = !tool.connection_type ||
+                    myConnections.some(c => c.connection_type === tool.connection_type);
+
+                const connectionStatus = tool.connection_type
+                    ? (hasConnection
+                        ? '<span class="conn-status connected">Connected</span>'
+                        : '<span class="conn-status needs-setup">Needs setup</span>')
+                    : '';
+
+                return `
+                    <div class="tool-card" onclick="openToolModal('${tool.id}')">
+                        <div class="tool-card-top">
+                            <h3>${tool.name}</h3>
+                            <span class="category-tag">${tool.category}</span>
+                        </div>
+                        <div class="tool-card-icon">${tool.icon}</div>
+                        <p class="tool-card-desc">${tool.description}</p>
+                        <div class="tool-card-bottom">
+                            <div class="tool-meta">
+                                <span class="source-label">${tool.source === 'python' ? 'Python' : 'MCP'}</span>
+                                ${connectionStatus}
+                            </div>
+                            <span class="add-link" onclick="event.stopPropagation(); openToolModal('${tool.id}')">Add skill +</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterByCategory(category, element) {
+            currentCategory = category;
+            document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
+            if (element) element.classList.add('active');
+            renderTools();
+        }
+
+        function filterTools() {
+            renderTools();
+        }
+
+        function openToolModal(toolId) {
+            const tool = allTools.find(t => t.id === toolId);
+            if (!tool) return;
+
+            selectedTool = tool;
+
+            document.getElementById('tool-modal-title').textContent = tool.name;
+            document.getElementById('tool-modal-icon').textContent = tool.icon;
+            document.getElementById('tool-modal-name').textContent = tool.name;
+            document.getElementById('tool-modal-desc').textContent = tool.description;
+            document.getElementById('tool-modal-category').textContent = tool.category;
+            document.getElementById('tool-modal-source').textContent = tool.source === 'python' ? 'Python' : 'MCP';
+
+            const connSection = document.getElementById('tool-connection-section');
+            const connStatus = document.getElementById('tool-connection-status');
+
+            if (tool.connection_type) {
+                connSection.style.display = 'block';
+                const connType = connectionTypes.find(ct => ct.id === tool.connection_type);
+                const userConn = myConnections.find(c => c.connection_type === tool.connection_type);
+
+                if (userConn) {
+                    connStatus.innerHTML = `
+                        <div class="conn-status-card connected">
+                            <span class="status-icon">✓</span>
+                            <div class="status-info">
+                                <strong>${userConn.name}</strong>
+                                <p>Connected to ${connType?.name || tool.connection_type}</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    connStatus.innerHTML = `
+                        <div class="conn-status-card needs-setup">
+                            <span class="status-icon">!</span>
+                            <div class="status-info">
+                                <strong>Connection Required</strong>
+                                <p>This tool requires a ${connType?.name || tool.connection_type} connection</p>
+                            </div>
+                            <a href="connections.html" class="configure-link">Configure Connection</a>
+                        </div>
+                    `;
+                }
+            } else {
+                connSection.style.display = 'none';
+            }
+
+            const paramsDiv = document.getElementById('tool-parameters');
+            const params = tool.parameters;
+
+            if (Array.isArray(params) && params.length > 0) {
+                paramsDiv.innerHTML = `
+                    <table class="params-table">
+                        <thead>
+                            <tr><th>Name</th><th>Type</th><th>Required</th><th>Default</th></tr>
+                        </thead>
+                        <tbody>
+                            ${params.map(p => `
+                                <tr>
+                                    <td><code>${p.name}</code></td>
+                                    <td>${p.type}</td>
+                                    <td>${p.required ? '✓' : '-'}</td>
+                                    <td>${p.default !== null ? p.default : '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else if (typeof params === 'object' && params.properties) {
+                const props = Object.entries(params.properties || {});
+                const required = params.required || [];
+
+                paramsDiv.innerHTML = `
+                    <table class="params-table">
+                        <thead>
+                            <tr><th>Name</th><th>Type</th><th>Required</th></tr>
+                        </thead>
+                        <tbody>
+                            ${props.map(([name, info]) => `
+                                <tr>
+                                    <td><code>${name}</code></td>
+                                    <td>${info.type || 'any'}</td>
+                                    <td>${required.includes(name) ? '✓' : '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                paramsDiv.innerHTML = '<p class="no-params">No parameters required</p>';
+            }
+
+            document.getElementById('tool-modal').classList.add('active');
+        }
+
+        function closeToolModal() {
+            document.getElementById('tool-modal').classList.remove('active');
+            selectedTool = null;
+        }
+
+        function addToolToAgent() {
+            if (!selectedTool) return;
+
+            if (selectedTool.connection_type) {
+                const hasConn = myConnections.some(c => c.connection_type === selectedTool.connection_type);
+                if (!hasConn) {
+                    if (confirm('This tool requires a connection. Configure now?')) {
+                        window.location.href = 'connections.html';
+                        return;
+                    }
+                }
+            }
+
+            alert(`Tool "${selectedTool.name}" ready to add. Go to Agents page to configure.`);
+            closeToolModal();
         }
     </script>
+
+    <style>
+        /* Tools Page Specific Styles - Matching Dark Theme */
+        .tools-page {
+            padding: 24px 32px;
+            max-width: 1400px;
+        }
+
+        .page-title-section {
+            margin-bottom: 24px;
+        }
+
+        .page-title-section h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 0 0 8px;
+            color: var(--text-primary);
+        }
+
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 32px;
+            max-width: 600px;
+        }
+
+        .search-container .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .search-container input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .search-container input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .content-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .section-title-row h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .count-badge {
+            background: var(--accent-blue);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .filter-pill {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.15s;
+        }
+
+        .filter-pill:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .filter-pill.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .tool-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .tool-card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .tool-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .tool-card-top h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .category-tag {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 3px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .tool-card-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .tool-card-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 0 0 16px;
+            line-height: 1.4;
+            min-height: 36px;
+        }
+
+        .tool-card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .tool-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .source-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .conn-status {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .conn-status.connected {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-green);
+        }
+
+        .conn-status.needs-setup {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+
+        .add-link {
+            font-size: 0.8rem;
+            color: var(--accent-blue);
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .add-link:hover {
+            text-decoration: underline;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .loading-indicator {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--card-bg);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-box.modal-lg {
+            max-width: 600px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .tool-header-block {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .tool-icon {
+            font-size: 2.5rem;
+        }
+
+        .tool-info h3 {
+            margin: 0 0 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .tool-info p {
+            margin: 0 0 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .tool-tags {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tool-tag {
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .tool-tag.category {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .tool-tag.source {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .tool-section {
+            margin-bottom: 24px;
+        }
+
+        .tool-section h4 {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0 0 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .conn-status-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .conn-status-card.connected {
+            border-color: var(--success-green);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .conn-status-card.needs-setup {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .status-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .conn-status-card.connected .status-icon {
+            background: var(--success-green);
+            color: white;
+        }
+
+        .conn-status-card.needs-setup .status-icon {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .status-info {
+            flex: 1;
+        }
+
+        .status-info strong {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+            color: var(--text-primary);
+        }
+
+        .status-info p {
+            margin: 0;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .configure-link {
+            font-size: 0.8rem;
+            color: var(--accent-blue);
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .configure-link:hover {
+            text-decoration: underline;
+        }
+
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .params-table th,
+        .params-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .params-table th {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        .params-table code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'SF Mono', 'Monaco', monospace;
+            font-size: 0.75rem;
+        }
+
+        .no-params {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--text-muted);
+        }
+    </style>
 </body>
 
 </html>

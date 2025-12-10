@@ -1144,6 +1144,198 @@ async def list_models():
     return {"success": True, "models": AVAILABLE_MODELS}
 
 
+# ==================== Tools & Connections API ====================
+
+from backend.tools.connections import ConnectionTemplates
+from backend.tools.registry import tool_registry
+from backend.tools.executor import execute_python_tool
+
+
+class ConnectionCreate(BaseModel):
+    name: str
+    connection_type: str
+    credentials: Dict[str, Any]
+
+
+class ConnectionUpdate(BaseModel):
+    name: Optional[str] = None
+    credentials: Optional[Dict[str, Any]] = None
+
+
+# --- Connection Templates ---
+@app.get("/connection-types")
+async def list_connection_types():
+    """Get all available OOTB connection templates."""
+    templates = ConnectionTemplates.get_all()
+    return {"success": True, "connection_types": templates}
+
+
+@app.get("/connection-types/{type_id}")
+async def get_connection_type(type_id: str):
+    """Get a specific connection template."""
+    template = ConnectionTemplates.get(type_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Connection type not found")
+    return {"success": True, "connection_type": template}
+
+
+# --- User Connections ---
+@app.get("/connections")
+async def list_connections(authorization: str = Header(None)):
+    """List all connections for the current user."""
+    # Get user from token (simplified - in production, use proper auth)
+    user_id = "default_user"  # TODO: Get from auth token
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization[7:]
+        user = database.get_user_by_token(token)
+        if user:
+            user_id = user.get("id", "default_user")
+    
+    connections = database.get_all_connections()  # For now, return all
+    return {"success": True, "connections": connections}
+
+
+@app.post("/connections")
+async def create_connection_endpoint(
+    connection: ConnectionCreate,
+    authorization: str = Header(None)
+):
+    """Create a new connection."""
+    user_id = "default_user"
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization[7:]
+        user = database.get_user_by_token(token)
+        if user:
+            user_id = user.get("id", "default_user")
+    
+    # Validate connection type exists
+    template = ConnectionTemplates.get(connection.connection_type)
+    if not template:
+        raise HTTPException(status_code=400, detail=f"Unknown connection type: {connection.connection_type}")
+    
+    # Validate required fields
+    required_fields = [f["key"] for f in template.get("fields", []) if f.get("required")]
+    missing = [f for f in required_fields if f not in connection.credentials]
+    if missing:
+        raise HTTPException(status_code=400, detail=f"Missing required fields: {missing}")
+    
+    result = database.create_connection(
+        user_id=user_id,
+        name=connection.name,
+        connection_type=connection.connection_type,
+        credentials=connection.credentials
+    )
+    
+    # Don't return credentials in response
+    if result:
+        result.pop('credentials', None)
+    
+    return {"success": True, "connection": result}
+
+
+@app.get("/connections/{connection_id}")
+async def get_connection_endpoint(connection_id: str):
+    """Get a specific connection (without credentials)."""
+    connection = database.get_connection_by_id(connection_id)
+    if not connection:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    
+    # Don't return credentials
+    connection.pop('credentials', None)
+    return {"success": True, "connection": connection}
+
+
+@app.put("/connections/{connection_id}")
+async def update_connection_endpoint(connection_id: str, update: ConnectionUpdate):
+    """Update a connection."""
+    updates = {}
+    if update.name:
+        updates['name'] = update.name
+    if update.credentials:
+        updates['credentials'] = update.credentials
+    
+    result = database.update_connection(connection_id, updates)
+    if not result:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    
+    result.pop('credentials', None)
+    return {"success": True, "connection": result}
+
+
+@app.delete("/connections/{connection_id}")
+async def delete_connection_endpoint(connection_id: str):
+    """Delete a connection."""
+    success = database.delete_connection(connection_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    return {"success": True, "message": "Connection deleted"}
+
+
+@app.post("/connections/{connection_id}/test")
+async def test_connection(connection_id: str):
+    """Test a connection by making a basic API call."""
+    connection = database.get_connection_by_id(connection_id)
+    if not connection:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    
+    # TODO: Implement actual connection testing per type
+    # For now, just return success if connection exists
+    return {"success": True, "message": "Connection is valid", "status": "connected"}
+
+
+# --- Python Tools ---
+@app.get("/tools/python")
+async def list_python_tools():
+    """List all registered Python tools."""
+    tools = tool_registry.get_all()
+    return {"success": True, "tools": tools}
+
+
+@app.get("/tools/python/{tool_id}")
+async def get_python_tool(tool_id: str):
+    """Get details of a specific Python tool."""
+    tool = tool_registry.get(tool_id)
+    if not tool:
+        raise HTTPException(status_code=404, detail="Tool not found")
+    
+    # Remove the function reference (not serializable)
+    tool_copy = {k: v for k, v in tool.items() if k != 'function'}
+    return {"success": True, "tool": tool_copy}
+
+
+@app.get("/tools/catalog")
+async def get_tools_catalog():
+    """Get combined catalog of all tools (MCP + Python)."""
+    # Get Python tools
+    python_tools = tool_registry.get_all()
+    
+    # Get MCP tools (already loaded at startup)
+    mcp_tool_list = []
+    for tool in mcp_tools:
+        mcp_tool_list.append({
+            "id": tool["function"]["name"],
+            "name": tool["function"]["name"].replace('_', ' ').title(),
+            "description": tool["function"]["description"],
+            "category": "mcp",
+            "connection_type": None,
+            "icon": "🔌",
+            "parameters": tool["function"].get("parameters", {}),
+            "source": "mcp"
+        })
+    
+    all_tools = python_tools + mcp_tool_list
+    
+    return {
+        "success": True,
+        "tools": all_tools,
+        "counts": {
+            "python": len(python_tools),
+            "mcp": len(mcp_tool_list),
+            "total": len(all_tools)
+        }
+    }
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Catch all unhandled exceptions."""

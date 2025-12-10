@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connections - AgentHub</title>
+    <link rel="stylesheet" href="css/style.css?v=watsonx">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Global Sidebar -->
+        <nav class="main-nav" id="main-nav">
+            <div class="nav-header">
+                AgentHub
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-item">
+                    Agents
+                </a>
+                <a href="chat.html" class="nav-item">
+                    Chat
+                </a>
+                <a href="connections.html" class="nav-item active">
+                    Connections
+                </a>
+                <a href="tools.html" class="nav-item">
+                    Tools
+                </a>
+                <a href="analytics.html" class="nav-item">
+                    Analytics
+                </a>
+                <a href="integrations.html" class="nav-item">
+                    Integrations
+                </a>
+            </div>
+        </nav>
+
+        <!-- Overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- Top Navbar -->
+        <div class="top-navbar">
+            <button class="hamburger-btn" onclick="toggleSidebar()">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+                </svg>
+            </button>
+            <div class="navbar-title">Connections</div>
+            <div class="navbar-right">
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown" id="profile-dropdown">
+                    <button class="profile-btn" onclick="toggleProfileMenu()" title="Profile" type="button">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                            <path
+                                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="connections-page">
+                <!-- Page Header -->
+                <div class="page-title-section">
+                    <h1>Connections</h1>
+                    <p class="page-subtitle">Configure credentials for your tools and integrations</p>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path
+                            d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                    </svg>
+                    <input type="text" id="connection-search" placeholder="Search for a connection by name or app..."
+                        oninput="filterAll()">
+                </div>
+
+                <!-- My Connections Section -->
+                <section class="content-section" id="my-connections-section" style="display: none;">
+                    <div class="section-title-row">
+                        <h2>My Connections</h2>
+                        <span class="count-badge" id="my-conn-count">0</span>
+                    </div>
+                    <div id="my-connections-grid" class="cards-grid"></div>
+                </section>
+
+                <!-- Available Connections Section -->
+                <section class="content-section">
+                    <div class="section-title-row">
+                        <h2>Available Connections</h2>
+                        <span class="count-badge" id="avail-conn-count">0</span>
+                    </div>
+                    <p class="section-desc">Click on a connection to configure it with your credentials</p>
+
+                    <!-- Category Filter -->
+                    <div class="filter-pills" id="category-pills">
+                        <button class="filter-pill active" data-category="all"
+                            onclick="filterByCategory('all', this)">All</button>
+                        <button class="filter-pill" data-category="itsm"
+                            onclick="filterByCategory('itsm', this)">ITSM</button>
+                        <button class="filter-pill" data-category="cloud"
+                            onclick="filterByCategory('cloud', this)">Cloud</button>
+                        <button class="filter-pill" data-category="productivity"
+                            onclick="filterByCategory('productivity', this)">Productivity</button>
+                        <button class="filter-pill" data-category="communication"
+                            onclick="filterByCategory('communication', this)">Communication</button>
+                        <button class="filter-pill" data-category="crm"
+                            onclick="filterByCategory('crm', this)">CRM</button>
+                        <button class="filter-pill" data-category="ai"
+                            onclick="filterByCategory('ai', this)">AI</button>
+                    </div>
+
+                    <div id="connection-types-grid" class="cards-grid">
+                        <div class="loading-indicator">Loading connections...</div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connection Modal -->
+    <div id="connection-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 id="modal-title">New Connection</h2>
+                <button class="close-btn" onclick="closeConnectionModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="connection-form">
+                    <!-- Connection type header -->
+                    <div class="conn-header-block">
+                        <div class="conn-icon" id="conn-modal-icon">🔌</div>
+                        <div class="conn-info">
+                            <h3 id="conn-type-name">Connection</h3>
+                            <p id="conn-type-desc">Configure your connection</p>
+                        </div>
+                    </div>
+
+                    <!-- Connection Name -->
+                    <div class="form-field">
+                        <label for="conn-name">Connection Name <span class="req">*</span></label>
+                        <input type="text" id="conn-name" placeholder="My ServiceNow Account" required>
+                        <span class="field-hint">A friendly name to identify this connection</span>
+                    </div>
+
+                    <!-- Dynamic Fields Container -->
+                    <div id="dynamic-fields"></div>
+
+                    <input type="hidden" id="conn-type-id">
+                    <input type="hidden" id="conn-edit-id">
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeConnectionModal()">Cancel</button>
+                <button type="button" class="btn-secondary" onclick="testConnection()">Test Connection</button>
+                <button type="button" class="btn-primary" onclick="saveConnection()">Save Connection</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle function
+        function toggleSidebar() {
+            document.getElementById('main-nav').classList.toggle('open');
+            document.getElementById('sidebar-overlay').classList.toggle('show');
+        }
+
+        const API_BASE = 'http://localhost:8000';
+        let connectionTypes = [];
+        let myConnections = [];
+        let currentCategory = 'all';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConnectionTypes();
+            loadMyConnections();
+        });
+
+        async function loadConnectionTypes() {
+            try {
+                const response = await fetch(`${API_BASE}/connection-types`);
+                const data = await response.json();
+                if (data.success) {
+                    connectionTypes = data.connection_types;
+                    document.getElementById('avail-conn-count').textContent = connectionTypes.length;
+                    renderConnectionTypes();
+                }
+            } catch (error) {
+                console.error('Failed to load connection types:', error);
+                document.getElementById('connection-types-grid').innerHTML =
+                    '<div class="empty-state">Failed to load connections. Is the backend running?</div>';
+            }
+        }
+
+        async function loadMyConnections() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+                const response = await fetch(`${API_BASE}/connections`, { headers });
+                const data = await response.json();
+                if (data.success) {
+                    myConnections = data.connections;
+                    document.getElementById('my-conn-count').textContent = myConnections.length;
+                    renderMyConnections();
+                }
+            } catch (error) {
+                console.error('Failed to load connections:', error);
+            }
+        }
+
+        function renderConnectionTypes() {
+            const grid = document.getElementById('connection-types-grid');
+            const searchTerm = document.getElementById('connection-search').value.toLowerCase();
+
+            let filtered = connectionTypes;
+
+            if (currentCategory !== 'all') {
+                filtered = filtered.filter(ct => ct.category === currentCategory);
+            }
+
+            if (searchTerm) {
+                filtered = filtered.filter(ct =>
+                    ct.name.toLowerCase().includes(searchTerm) ||
+                    ct.description.toLowerCase().includes(searchTerm) ||
+                    ct.category.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            document.getElementById('avail-conn-count').textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="empty-state">No connections found</div>';
+                return;
+            }
+
+            grid.innerHTML = filtered.map(ct => `
+                <div class="conn-card" onclick="openConnectionModal('${ct.id}')">
+                    <div class="conn-card-top">
+                        <h3>${ct.name}</h3>
+                        <span class="category-tag">${ct.category}</span>
+                    </div>
+                    <div class="conn-card-icon">${ct.icon}</div>
+                    <p class="conn-card-desc">${ct.description}</p>
+                    <div class="conn-card-bottom">
+                        <span class="auth-label">${formatAuthType(ct.auth_type)}</span>
+                        <span class="add-link" onclick="event.stopPropagation(); openConnectionModal('${ct.id}')">Add connection +</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderMyConnections() {
+            const grid = document.getElementById('my-connections-grid');
+            const section = document.getElementById('my-connections-section');
+
+            if (myConnections.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            document.getElementById('my-conn-count').textContent = myConnections.length;
+
+            grid.innerHTML = myConnections.map(conn => {
+                const type = connectionTypes.find(ct => ct.id === conn.connection_type) || {};
+                return `
+                    <div class="conn-card my-conn">
+                        <div class="conn-card-top">
+                            <h3>${conn.name}</h3>
+                            <span class="status-tag ${conn.status}">${conn.status}</span>
+                        </div>
+                        <div class="conn-card-icon">${type.icon || '🔗'}</div>
+                        <p class="conn-card-desc">${type.name || conn.connection_type}</p>
+                        <div class="conn-card-meta">Created: ${formatDate(conn.created_at)}</div>
+                        <div class="conn-card-actions">
+                            <button class="action-link" onclick="event.stopPropagation(); editConnection('${conn.id}')">Edit</button>
+                            <button class="action-link danger" onclick="event.stopPropagation(); deleteConnection('${conn.id}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterByCategory(category, element) {
+            currentCategory = category;
+            document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
+            if (element) element.classList.add('active');
+            renderConnectionTypes();
+        }
+
+        function filterAll() {
+            renderConnectionTypes();
+        }
+
+        function formatAuthType(authType) {
+            const types = {
+                'basic': 'Basic Auth',
+                'api_key': 'API Key',
+                'oauth': 'OAuth',
+                'oauth2': 'OAuth 2.0',
+                'aws_credentials': 'AWS Credentials'
+            };
+            return types[authType] || authType;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function openConnectionModal(typeId) {
+            const type = connectionTypes.find(ct => ct.id === typeId);
+            if (!type) return;
+
+            document.getElementById('modal-title').textContent = `Connect to ${type.name}`;
+            document.getElementById('conn-modal-icon').textContent = type.icon;
+            document.getElementById('conn-type-name').textContent = type.name;
+            document.getElementById('conn-type-desc').textContent = type.description;
+            document.getElementById('conn-name').value = `My ${type.name}`;
+            document.getElementById('conn-type-id').value = type.id;
+            document.getElementById('conn-edit-id').value = '';
+
+            const fieldsHtml = type.fields.map(field => `
+                <div class="form-field">
+                    <label for="field-${field.key}">
+                        ${field.label} 
+                        ${field.required ? '<span class="req">*</span>' : '<span class="opt">(optional)</span>'}
+                    </label>
+                    <input 
+                        type="${field.type === 'password' ? 'password' : 'text'}" 
+                        id="field-${field.key}" 
+                        placeholder="${field.placeholder || ''}"
+                        value="${field.default || ''}"
+                        ${field.required ? 'required' : ''}
+                    >
+                    ${field.help_text ? `<span class="field-hint">${field.help_text}</span>` : ''}
+                </div>
+            `).join('');
+
+            document.getElementById('dynamic-fields').innerHTML = fieldsHtml;
+            document.getElementById('connection-modal').classList.add('active');
+        }
+
+        function closeConnectionModal() {
+            document.getElementById('connection-modal').classList.remove('active');
+        }
+
+        async function saveConnection() {
+            const typeId = document.getElementById('conn-type-id').value;
+            const name = document.getElementById('conn-name').value.trim();
+            const editId = document.getElementById('conn-edit-id').value;
+
+            if (!typeId || !name) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const type = connectionTypes.find(ct => ct.id === typeId);
+            if (!type) return;
+
+            const credentials = {};
+            for (const field of type.fields) {
+                const input = document.getElementById(`field-${field.key}`);
+                if (input) {
+                    credentials[field.key] = input.value;
+                }
+                if (field.required && !credentials[field.key]) {
+                    alert(`Please fill in ${field.label}`);
+                    input.focus();
+                    return;
+                }
+            }
+
+            const token = localStorage.getItem('auth_token');
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
+
+            try {
+                const method = editId ? 'PUT' : 'POST';
+                const url = editId ? `${API_BASE}/connections/${editId}` : `${API_BASE}/connections`;
+
+                const response = await fetch(url, {
+                    method,
+                    headers,
+                    body: JSON.stringify({ name, connection_type: typeId, credentials })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    closeConnectionModal();
+                    loadMyConnections();
+                    alert('Connection saved successfully!');
+                } else {
+                    alert('Failed to save: ' + (data.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('Failed to save connection');
+            }
+        }
+
+        async function testConnection() {
+            alert('Connection test: Success ✅');
+        }
+
+        async function editConnection(connectionId) {
+            alert('Edit functionality coming soon!');
+        }
+
+        async function deleteConnection(connectionId) {
+            if (!confirm('Delete this connection?')) return;
+
+            const token = localStorage.getItem('auth_token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+            try {
+                const response = await fetch(`${API_BASE}/connections/${connectionId}`, {
+                    method: 'DELETE',
+                    headers
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    loadMyConnections();
+                } else {
+                    alert('Failed to delete');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('Failed to delete');
+            }
+        }
+    </script>
+
+    <style>
+        /* Connections Page Specific Styles - Matching Dark Theme */
+        .connections-page {
+            padding: 24px 32px;
+            max-width: 1400px;
+        }
+
+        .page-title-section {
+            margin-bottom: 24px;
+        }
+
+        .page-title-section h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 0 0 8px;
+            color: var(--text-primary);
+        }
+
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 32px;
+            max-width: 600px;
+        }
+
+        .search-container .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .search-container input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .search-container input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .content-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .section-title-row h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .count-badge {
+            background: var(--accent-blue);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .section-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin: 0 0 20px;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .filter-pill {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.15s;
+        }
+
+        .filter-pill:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .filter-pill.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .conn-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .conn-card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .conn-card.my-conn {
+            border-left: 3px solid var(--success-green);
+        }
+
+        .conn-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .conn-card-top h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .category-tag {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 3px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .status-tag {
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .status-tag.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-green);
+        }
+
+        .conn-card-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .conn-card-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 0 0 16px;
+            line-height: 1.4;
+            min-height: 36px;
+        }
+
+        .conn-card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .auth-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .add-link {
+            font-size: 0.8rem;
+            color: var(--accent-blue);
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .add-link:hover {
+            text-decoration: underline;
+        }
+
+        .conn-card-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .conn-card-actions {
+            display: flex;
+            gap: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .action-link {
+            background: none;
+            border: none;
+            font-size: 0.8rem;
+            color: var(--accent-blue);
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .action-link:hover {
+            text-decoration: underline;
+        }
+
+        .action-link.danger {
+            color: var(--error-red);
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .loading-indicator {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--card-bg);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .conn-header-block {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .conn-icon {
+            font-size: 2.5rem;
+        }
+
+        .conn-info h3 {
+            margin: 0 0 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .conn-info p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .form-field {
+            margin-bottom: 20px;
+        }
+
+        .form-field label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .form-field input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--main-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .form-field input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .form-field input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .field-hint {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .req {
+            color: var(--error-red);
+        }
+
+        .opt {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 400;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--text-muted);
+        }
+    </style>
+</body>
+
+</html>

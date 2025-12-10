@@ -238,8 +238,8 @@ function renderToolList(agent) {
                 <span class="tool-item-name">${meta.name}</span>
                 <span class="tool-item-desc">${meta.desc}</span>
             </div>
-            <button class="tool-item-menu" onclick="removeTool('${toolId}')" title="Remove Tool">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <button class="tool-item-menu" onclick="window.handleToolRemove('${toolId}')" title="Remove Tool">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="pointer-events: none;">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                 </svg>
             </button>
@@ -248,9 +248,65 @@ function renderToolList(agent) {
     });
 }
 
-async function removeTool(toolId) {
-    if (!currentAgentId || !confirm('Remove this tool?')) return;
+// Global handler for tool removal (called from inline onclick)
+window.handleToolRemove = function (toolId) {
+    console.log('handleToolRemove called with:', toolId);
+    if (toolId) {
+        removeTool(toolId);
+    }
+};
 
+// Tool removal with modal confirmation
+let pendingToolRemoval = null;
+
+function removeTool(toolId) {
+    console.log('removeTool called with:', toolId, 'currentAgentId:', currentAgentId);
+
+    if (!currentAgentId) {
+        console.log('No agent selected, returning early');
+        return;
+    }
+
+    const meta = TOOL_METADATA[toolId] || { name: toolId };
+    pendingToolRemoval = toolId;
+
+    // Show custom modal
+    const modal = document.getElementById('remove-tool-modal');
+    const message = document.getElementById('remove-tool-message');
+    console.log('Modal element:', modal, 'Message element:', message);
+
+    if (modal && message) {
+        message.textContent = `Are you sure you want to remove "${meta.name}"?`;
+        modal.style.display = 'flex';
+        modal.classList.add('show');  // Required for CSS visibility
+        console.log('Modal should now be visible');
+    } else {
+        console.log('Modal not found, using confirm dialog');
+        // Fallback to confirm if modal not found
+        if (confirm(`Remove "${meta.name}" from agent?`)) {
+            executeToolRemoval(toolId);
+        }
+    }
+}
+
+function closeRemoveToolModal() {
+    const modal = document.getElementById('remove-tool-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    }
+    pendingToolRemoval = null;
+}
+
+async function confirmRemoveTool() {
+    if (!pendingToolRemoval) return;
+
+    const toolId = pendingToolRemoval;
+    closeRemoveToolModal();
+    await executeToolRemoval(toolId);
+}
+
+async function executeToolRemoval(toolId) {
     const agent = agents[currentAgentId];
     const currentTools = agent.tools || [];
     const newTools = currentTools.filter(t => t !== toolId);

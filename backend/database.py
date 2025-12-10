@@ -70,6 +70,32 @@ def init_db():
             )
         """)
         
+        # Connections table (for tool credentials)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS connections (
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                name TEXT NOT NULL,
+                connection_type TEXT NOT NULL,
+                credentials TEXT,
+                status TEXT DEFAULT 'active',
+                last_used TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Tool-Connection mapping
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tool_connections (
+                tool_id TEXT NOT NULL,
+                connection_id TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (tool_id, connection_id),
+                FOREIGN KEY (connection_id) REFERENCES connections(id) ON DELETE CASCADE
+            )
+        """)
+        
         # ... (rest of init_db) ...
 
 # ...
@@ -559,6 +585,153 @@ def get_previous_period_analytics(days: int = 30, agent_id: Optional[str] = None
             "conversations": prev_conversations,
             "messages": prev_messages
         }
+
+
+# ==================== Connection Management ====================
+
+def create_connection(
+    user_id: str,
+    name: str,
+    connection_type: str,
+    credentials: Dict[str, Any]
+) -> Dict:
+    """Create a new connection."""
+    import secrets
+    connection_id = f"conn_{secrets.token_hex(6)}"
+    credentials_json = json.dumps(credentials)  # TODO: Encrypt this
+    
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO connections (id, user_id, name, connection_type, credentials)
+            VALUES (?, ?, ?, ?, ?)
+        """, (connection_id, user_id, name, connection_type, credentials_json))
+    
+    return get_connection_by_id(connection_id)
+
+
+def get_connection_by_id(connection_id: str) -> Optional[Dict]:
+    """Get a connection by ID."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM connections WHERE id = ?", (connection_id,))
+        row = cursor.fetchone()
+        if row:
+            result = dict(row)
+            # Don't return raw credentials in list views - only decrypt when executing
+            return result
+        return None
+
+
+def get_user_connections(user_id: str) -> List[Dict]:
+    """Get all connections for a user."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, user_id, name, connection_type, status, last_used, created_at, updated_at
+            FROM connections 
+            WHERE user_id = ? AND status = 'active'
+            ORDER BY created_at DESC
+        """, (user_id,))
+        return [dict(row) for row in cursor.fetchall()]
+
+
+def get_all_connections() -> List[Dict]:
+    """Get all connections (admin view)."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, user_id, name, connection_type, status, last_used, created_at, updated_at
+            FROM connections 
+            WHERE status = 'active'
+            ORDER BY created_at DESC
+        """)
+        return [dict(row) for row in cursor.fetchall()]
+
+
+def get_user_connection_by_type(user_id: str, connection_type: str) -> Optional[Dict]:
+    """Get a user's connection for a specific type."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM connections 
+            WHERE user_id = ? AND connection_type = ? AND status = 'active'
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (user_id, connection_type))
+        row = cursor.fetchone()
+        if row:
+            result = dict(row)
+            if result.get('credentials'):
+                try:
+                    result['credentials'] = json.loads(result['credentials'])
+                except:
+                    result['credentials'] = {}
+            return result
+        return None
+
+
+def get_connection_by_type(connection_type: str) -> Optional[Dict]:
+    """Get the first active connection of a specific type (for shared/system connections)."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM connections 
+            WHERE connection_type = ? AND status = 'active'
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (connection_type,))
+        row = cursor.fetchone()
+        if row:
+            result = dict(row)
+            if result.get('credentials'):
+                try:
+                    result['credentials'] = json.loads(result['credentials'])
+                except:
+                    result['credentials'] = {}
+            return result
+        return None
+
+
+def update_connection(connection_id: str, updates: Dict[str, Any]) -> Optional[Dict]:
+    """Update a connection."""
+    allowed_fields = ['name', 'credentials', 'status']
+    
+    with get_db() as conn:
+        cursor = conn.cursor()
+        
+        for field, value in updates.items():
+            if field in allowed_fields:
+                if field == 'credentials':
+                    value = json.dumps(value)  # TODO: Encrypt
+                cursor.execute(f"""
+                    UPDATE connections 
+                    SET {field} = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                """, (value, connection_id))
+    
+    return get_connection_by_id(connection_id)
+
+
+def delete_connection(connection_id: str) -> bool:
+    """Delete (soft) a connection."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE connections SET status = 'deleted', updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (connection_id,))
+        return cursor.rowcount > 0
+
+
+def update_connection_last_used(connection_id: str):
+    """Update the last_used timestamp for a connection."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE connections SET last_used = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (connection_id,))
 
 
 if __name__ == "__main__":

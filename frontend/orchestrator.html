@@ -24,6 +24,12 @@
                 <a href="chat.html" class="nav-item">
                     Chat
                 </a>
+                <a href="connections.html" class="nav-item">
+                    Connections
+                </a>
+                <a href="tools.html" class="nav-item">
+                    Tools
+                </a>
                 <a href="analytics.html" class="nav-item">
                     Analytics
                 </a>
@@ -333,6 +339,18 @@
                 </div>
             </div>
 
+            <!-- Remove Tool Confirmation Modal -->
+            <div id="remove-tool-modal" class="modal-overlay" style="display:none;">
+                <div class="modal-dialog">
+                    <h3>Remove Tool</h3>
+                    <p id="remove-tool-message">Are you sure you want to remove this tool?</p>
+                    <div class="modal-buttons">
+                        <button class="modal-btn modal-btn-cancel" onclick="closeRemoveToolModal()">Cancel</button>
+                        <button class="modal-btn modal-btn-delete" onclick="confirmRemoveTool()">Remove</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Shared Modals injected by js/modals.js -->
             <script src="js/modals.js"></script>
 
@@ -401,7 +419,21 @@
                 </div>
             </div>
 
-            <script src="js/script.js?v=15"></script>
+            <script src="js/script.js?v=18"></script>
+            <script>
+                // Ensure the global handler is defined
+                if (typeof window.handleToolRemove !== 'function') {
+                    window.handleToolRemove = function (toolId) {
+                        console.log('Inline handleToolRemove called:', toolId);
+                        if (typeof removeTool === 'function') {
+                            removeTool(toolId);
+                        } else {
+                            alert('removeTool function not found. Tool ID: ' + toolId);
+                        }
+                    };
+                }
+                console.log('Tool removal handler ready:', typeof window.handleToolRemove);
+            </script>
         </div> <!-- End main-content -->
     </div> <!-- End app-container -->
 </body>
